@@ -6,7 +6,8 @@ build:
 	cordova build
 
 browser:
-	cordova build browser
+	[[ -d platforms/browser/ ]] || cordova platform add browser --save
+	#cordova build browser
 	cordova run browser --device
 
 android:
