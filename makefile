@@ -29,3 +29,9 @@ add:
 	cordova platform add ios --save
 	cordova platform add android --save
 	cordova platform add browser --save
+
+dist-nuke:
+	# I don't like using git clean's nukes; I prefer having a whitelist of things I'm lighting on fire:
+	rm -rf node_modules/ platforms/ plugins/
+	# this should be empty if the whitelist contains everything:
+	git status --ignored
