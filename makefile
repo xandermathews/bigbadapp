@@ -16,9 +16,12 @@ android:
 	cordova run android --device
 
 ios:
-	cordova build ios
-	cordova run ios --device
+	./install_pre-reqs.sh ios
+	[[ -d platforms/ios/ ]] || cordova prepare ios
+	cordova run ios --device --buildFlag="DEVELOPMENT_TEAM=RU2387524S"
 
+xcode:
+	open platforms/ios/BigBadApp.xcworkspace
 
 # this is for unwedging platform includes, which I needed when I moved the local copy of the project around.
 remove:

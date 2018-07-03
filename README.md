@@ -17,3 +17,5 @@ Code signing is required for product type 'Application' in SDK 'iOS 10.2'
 ```
 
 then ```open platforms/ios/BigBadApp.xcodeproj``` and follow [this stackoverflow](https://stackoverflow.com/a/41217410/171105)
+
+or follow [cordova's instructions](https://cordova.apache.org/docs/en/latest/guide/platforms/ios/#requirements-and-support) about opening and tweaking the xcode workspace.
