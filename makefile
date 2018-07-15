@@ -8,7 +8,7 @@ build:
 browser:
 	# [[ -d platforms/browser/ ]] || cordova platform add browser --save
 	[[ -d platforms/browser/ ]] || cordova prepare browser
-	cordova run browser --device
+	cordova run browser --device -- --live-reload
 
 android:
 	./install_pre-reqs.sh android
