@@ -1,46 +1,68 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-var app = {
-    // Application Constructor
-    initialize: function() {
-        document.addEventListener('deviceready', this.onDeviceReady.bind(this), false);
-    },
+"use strict";
 
-    // deviceready Event Handler
-    //
-    // Bind any cordova events here. Common events are:
-    // 'pause', 'resume', etc.
-    onDeviceReady: function() {
-        this.receivedEvent('deviceready');
-    },
+document.addEventListener('pause', function() {
+	console.log("pause");
+});
 
-    // Update DOM on a Received Event
-    receivedEvent: function(id) {
-        var parentElement = document.getElementById(id);
-        var listeningElement = parentElement.querySelector('.listening');
-        var receivedElement = parentElement.querySelector('.received');
+document.addEventListener('resume', function() {
+	console.log("resume");
+});
 
-        listeningElement.setAttribute('style', 'display:none;');
-        receivedElement.setAttribute('style', 'display:block;');
+function fail(e) {
+	console.error(e);
+}
 
-        console.log('Received Event: ' + id);
-    }
-};
+document.addEventListener('deviceready', function() {
+	/*
+	var parentElement = document.getElementById('deviceready');
+	var listeningElement = parentElement.querySelector('.listening');
+	var receivedElement = parentElement.querySelector('.received');
 
-app.initialize();
+	listeningElement.setAttribute('style', 'display:none;');
+	receivedElement.setAttribute('style', 'display:block;');
+	*/
+	var $display = $("#deviceready");
+	$display.find('.listening').hide();
+	$display.find('.received').show();
+	setTimeout(() => {
+		api.login('Xander', 'brake68care48dust94fire');
+	}, 1000);
+
+	console.log('deviceready');
+	var $login_modal = gen('.login', null, document.body);
+	var user = $login_modal.gen('input.user', {value: 'Xander', placeholder: 'username'});
+	var pass = $login_modal.gen('input.pass', {value: 'brake68care48dust94fire', placeholder: 'password'});
+	var subm = $login_modal.gen('button', {
+		text: 'Login',
+		click() {
+			console.log("logging in", user.val(), pass.val());
+			api.login(user.val(), pass.val()).done(s => {
+				console.log('wtf', s);
+				localStorage.setItem('Authorization', s);
+				api.authorization = s;
+				api.events.me().done(s => {
+					console.log('events:', s);
+					s.text().done(text => {
+						console.log('ANSWER:', text);
+					}, fail);
+				}, fail);
+			}, fail);
+		}
+	});
+	$login_modal.easyModal({
+		onOpen() {
+			user.focus();
+		}
+	});
+
+	var $login = gen('button.login', {
+		text: "login",
+		click(e) {
+			console.log("clicked?");
+			e.stopPropagation();
+			e.preventDefault();
+			$login_modal.trigger('openModal');
+			return false;
+		}
+	}, document.body);
+}, false);

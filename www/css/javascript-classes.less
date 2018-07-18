@@ -1,0 +1,28 @@
+@loginsize: 40px;
+button.login {
+	position: fixed;
+	right: 10px;
+	top: 10px;
+	border-radius: 50%;
+	width: @loginsize;
+	height: @loginsize;
+	text-align: center;
+	cursor: pointer;
+	outline: none;
+}
+
+div.login {
+	background-color: white;
+	border-radius: 10px;
+	padding: 20px;
+	padding-bottom: 0;
+	> * {
+		margin-bottom: 20px;
+		width: 150px;
+	}
+	> input {
+		display: block;
+		&.user {
+		}
+	}
+}
