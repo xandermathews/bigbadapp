@@ -1,0 +1,91 @@
+// Default options for everything
+
+body {
+    background: #ebe0c3;
+    text-transform: none;
+}
+.buttons {
+    text-align: right;
+    margin: 10px 0;
+}
+.preschedule {
+    .gamelist .time, .day {
+        display: none;
+    }
+}
+
+.app-header {
+    height: 100px;
+    background-image: url(../img/forest-background-2x.png);
+    background-size: contain;
+    background-repeat: repeat-x;
+    background-position: bottom left;
+    .logo {
+        height: 65px;
+        width: auto;
+        margin: 10px 0;
+    }
+}
+
+.page-header {
+    background: #677d5d;
+    h1 {
+        display: inline-block;
+        text-align: left;
+        margin: 0 0 3px;
+        color: #fbf1d4;
+        font-size: 2.3rem;
+    }
+    #available-games-btn {
+        float: right;
+        position: relative;
+        top: 7px;
+        padding: .25rem .75rem;
+    }
+}
+.games {
+    margin: 10px 0; 
+}
+.gamelist {
+    thead {
+        .length {
+           
+        }
+        th {
+            border: 0;
+        }
+    }
+
+    tbody {
+        line-height: 1.3;
+        .length::after {
+            content: "hrs";
+            margin-left: 3px;
+        }
+        td {
+            border-top: 1px solid #bace9d;
+            a {
+                color: #82130e;
+            }
+        }
+    }
+
+    // hide on small screens by default
+    .length, .available { display: none } 
+}
+
+
+
+// Small devices (landscape phones, 576px and up) 
+@media (min-width: 576px) { 
+    .preschedule {
+        .gamelist .length {
+            display: table-cell;
+        }
+    }
+    .postschedule {
+        .available {
+            display: table-cell;
+        }
+    }
+}

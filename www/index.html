@@ -17,18 +17,78 @@
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
         <link rel="stylesheet"      type="text/css" href="css/cordova-core.css">
         <link rel="stylesheet"      type="text/css" href="css/datatables.min.css">
+        <link rel="stylesheet"      type="text/css" href="css/bootstrap.min.css"> <!-- adding this manually for now but might be better to use weppack or compile via grunt or something -->
 		<link rel="stylesheet/less" type="text/css" href="css/common.less">
-		<link rel="stylesheet/less" type="text/css" href="css/javascript-classes.less">
-        <title>Hello World</title>
+        <link rel="stylesheet/less" type="text/css" href="css/javascript-classes.less">
+        <link rel="stylesheet/less" type="text/css" href="css/styles.less">
+        <title>Big Bad App</title>
     </head>
-    <body>
-        <div class="app">
-            <h1>Apache Cordova</h1>
-            <div id="deviceready" class="blink">
-                <p class="event listening">Connecting to Device</p>
-                <p class="event received">Big Bad App is Ready</p>
-            </div>
+    <body class="preschedule"> <!--toggle class to postschedule when we have the games scheduled by day-->
+        <header class="container-fluid app-header">
+            <img class="logo" src="img/Big-Bad-App-Logo.png" alt="Big Bad App" />
+            <!-- Needs a hamburger menu here with all the categories -->
+        </header>
+
+        <div class="page">
+            <header class="page-header container-fluid">
+                    <h1 class="catagory">RPGs</h1>
+                    <!--This button should toggle on/off full games and switch button text to Show All Games when toggled-->
+                    <button id="available-games-btn" class="btn btn-warning" type="submit">Hide Full Games</button>  
+            </header>
+            <section class="games container-fluid">
+                <header class="section-header">
+                    <h2 class="day">Friday October 11th</h2>
+                </header>
+                <table class="gamelist table table-sm table-responsive">
+                    <thead>
+                        <tr>
+                            <th class="time">Time</th>
+                            <th class="event-name">Event</th>
+                            <th class="system">System</th>
+                            <th class="gm">GM</th>
+                            <th class="length">Length</th>
+                            <th class="available">Available</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="time">9am-1pm</td>
+                            <td class="event-name"><a href="#">HONEYCON 2018: The Happiest Place on Earth</a></td>
+                            <td class="system">Honey Heist</td>
+                            <td class="gm">Kevin Marshall</td>
+                            <td class="length">4</td>
+                            <td class="available">4 of 4</td>
+                        </tr>
+                        <tr>
+                            <td class="time">9am-1pm</td>
+                            <td class="event-name"><a href="#">Nancy Drew and The Monster at Brownstone Academy</a></td>
+                            <td class="system">Monsterhearts 2</td>
+                            <td class="gm">April Padilla</td>
+                            <td class="length">4</td>
+                            <td class="available">6 of 6</td>
+                        </tr>
+                        <tr>
+                            <td class="time">9am-1pm</td>
+                            <td class="event-name"><a href="#">When you gaze long into the abyss, the abyss sometimes bites back.</a></td>
+                            <td class="system">Monster of the Week</td>
+                            <td class="gm">Zed Lopez</td>
+                            <td class="length">4</td>
+                            <td class="available">0 of 5</td>
+                        </tr>
+                        <tr>
+                            <td class="time">9am-1pm</td>
+                            <td class="event-name"><a href="#">Daughter of Dagon</a></td>
+                            <td class="system">Mighty Protectors (Villains &amp; Vigilantes 3.0)</td>
+                            <td class="gm">Keith Phemister</td>
+                            <td class="length">6</td>
+                            <td class="available">6 of 6</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
         </div>
+
+
         <script src="cordova.js"></script>
         <script src="js/jquery-3.3.1.slim.min.js"></script>
         <script src="js/jquery.easyModal.js"></script>
