@@ -47,13 +47,18 @@ document.addEventListener('deviceready', function() {
 				console.log('wtf', s);
 				localStorage.setItem('Authorization', s);
 				api.authorization = s;
-				api.events.me().done(s => {
-					console.log('events:', s);
+				api.events.me().done(events => {
+					console.log('events:', events);
+					return;
 					s.text().done(text => {
 						console.log('ANSWER:', text);
 					}, fail);
 				}, fail);
-			}, fail);
+			}, err => {
+				if (err.code !== 401) fail(e);
+				if (err.body && err.body.message) alert(err.body.message);
+				else alert("FAIL: "+ JSON.stringify(err, null, 2));
+			});
 		}
 	});
 	$login_modal.easyModal({
