@@ -15,10 +15,10 @@
         <meta name="format-detection" content="telephone=no">
         <meta name="msapplication-tap-highlight" content="no">
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
-        <link rel="stylesheet"      type="text/css" href="css/cordova-core.css">
-        <link rel="stylesheet"      type="text/css" href="css/datatables.min.css">
-        <link rel="stylesheet"      type="text/css" href="css/bootstrap.min.css"> <!-- adding this manually for now but might be better to use weppack or compile via grunt or something -->
-		<link rel="stylesheet/less" type="text/css" href="css/common.less">
+        <link rel="stylesheet"      type="text/css" href="css-vendor/cordova-core.css">
+        <link rel="stylesheet"      type="text/css" href="css-vendor/datatables.min.css">
+        <link rel="stylesheet"      type="text/css" href="css-vendor/bootstrap.min.css"> <!-- adding this manually for now but might be better to use weppack or compile via grunt or something -->
+        <link rel="stylesheet/less" type="text/css" href="css/common.less">
         <link rel="stylesheet/less" type="text/css" href="css/javascript-classes.less">
         <link rel="stylesheet/less" type="text/css" href="css/styles.less">
         <title>Big Bad App</title>
@@ -33,7 +33,7 @@
             <header class="page-header container-fluid">
                     <h1 class="catagory">RPGs</h1>
                     <!--This button should toggle on/off full games and switch button text to Show All Games when toggled-->
-                    <button id="available-games-btn" class="btn btn-warning" type="submit">Hide Full Games</button>  
+                    <button id="available-games-btn" class="btn btn-warning" type="submit">Hide Full Games</button>
             </header>
             <section class="games container-fluid">
                 <header class="section-header">
@@ -90,13 +90,13 @@
 
 
         <script src="cordova.js"></script>
-        <script src="js/jquery-3.3.1.slim.min.js"></script>
-        <script src="js/jquery.easyModal.js"></script>
-		<script src="js/q.js"></script>
-		<script src="js/datatables.min.js"></script>
-		<script src="js/gen.js"></script>
+        <script src="js-vendor/jquery-3.3.1.slim.min.js"></script>
+        <script src="js-vendor/jquery.easyModal.js"></script>
+        <script src="js-vendor/q.js"></script>
+        <script src="js-vendor/datatables.min.js"></script>
+        <script src="js/gen.js"></script>
         <script src="js/api.js"></script>
         <script src="js/index.js"></script>
-		<script src="js/less.min.js"></script>
+        <script src="js-vendor/less.min.js"></script>
     </body>
 </html>

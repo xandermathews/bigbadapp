@@ -24,14 +24,21 @@ document.addEventListener('deviceready', function() {
 	var $display = $("#deviceready");
 	$display.find('.listening').hide();
 	$display.find('.received').show();
-	setTimeout(() => {
-		api.login('Xander', 'brake68care48dust94fire');
-	}, 1000);
 
-	console.log('deviceready');
 	var $login_modal = gen('.login', null, document.body);
-	var user = $login_modal.gen('input.user', {value: 'Xander', placeholder: 'username'});
-	var pass = $login_modal.gen('input.pass', {value: 'brake68care48dust94fire', placeholder: 'password'});
+	var udata = {placeholder: 'username'};
+	var pdata = {placeholder: 'password'};
+	if (0) {
+		// xander's api debugging mode
+		udata.value = 'Xander';
+		pdata.value = 'brake68care48dust94fire';
+		setTimeout(() => {
+			api.login('Xander', 'brake68care48dust94fire');
+		}, 1000);
+	}
+
+	var user = $login_modal.gen('input.user', udata);
+	var pass = $login_modal.gen('input.pass', pdata);
 	var subm = $login_modal.gen('button', {
 		text: 'Login',
 		click() {

@@ -1,4 +1,4 @@
-@loginsize: 40px;
+@loginsize: 50px;
 button.login {
 	position: fixed;
 	right: 10px;
@@ -9,6 +9,12 @@ button.login {
 	text-align: center;
 	cursor: pointer;
 	outline: none;
+	opacity: .1;
+	transition: all 1s;
+	background-color: #ffc107;
+	&:hover {
+		opacity: 1;
+	}
 }
 
 div.login {

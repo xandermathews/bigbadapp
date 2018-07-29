@@ -63,3 +63,6 @@ typings/
 # cordova
 /platforms/
 /plugins/
+
+# we're using yarn's lock format, so ignoring npm's lock file:
+package-lock.json
