@@ -44,3 +44,8 @@ add:
 dist-nuke:
 	rm -rf node_modules/ platforms/ plugins/
 	git status --ignored
+
+# this will cease to be a manual step when I'm willing to reinstall all my platform files -- I'll refactor this into the minimum number of steps at that time.
+hack-icon:
+	cp www/favicon.ico platforms/browser/www/favicon.ico
+	cp www/favicon.ico platforms/browser/platform_www/favicon.ico
