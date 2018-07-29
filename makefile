@@ -10,6 +10,11 @@ browser:
 	[[ -d platforms/browser/ ]] || cordova prepare browser
 	cordova run browser --device -- --live-reload
 
+# this is same as "browser", except dropping the live reload component that causes the first render to have several errors.
+demo:
+	[[ -d platforms/browser/ ]] || cordova prepare browser
+	cordova run browser --device
+
 android:
 	./install_pre-reqs.sh android
 	[[ -d platforms/android/ ]] || cordova prepare android
