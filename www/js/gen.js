@@ -3,6 +3,7 @@
 function gen(key, attrs, parent) {
 	key = key || 'div';
 	attrs = attrs || {};
+	if (typeof attrs !== 'object') attrs = {text: attrs};
 
 	key = key.split('/');
 	if (key.length > 1) {

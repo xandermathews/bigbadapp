@@ -44,12 +44,12 @@ body {
     }
 }
 .games {
-    margin: 10px 0; 
+    margin: 10px 0;
 }
 .gamelist {
     thead {
         .length {
-           
+
         }
         th {
             border: 0;
@@ -67,17 +67,25 @@ body {
             a {
                 color: #82130e;
             }
+            &.event-name {
+            	cursor: pointer;
+            	transition: background-color .5s;
+            	border-radius: 5px;
+            	&:hover {
+            		background-color: #ffc107;
+				}
+			}
         }
     }
 
     // hide on small screens by default
-    .length, .available { display: none } 
+    .length, .available { display: none }
 }
 
 
 
-// Small devices (landscape phones, 576px and up) 
-@media (min-width: 576px) { 
+// Small devices (landscape phones, 576px and up)
+@media (min-width: 576px) {
     .preschedule {
         .gamelist .length {
             display: table-cell;
