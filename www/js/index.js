@@ -20,19 +20,45 @@ function stateLoginTime() {
 	localStorage.removeItem('Authorization');
 }
 
-var all_games = [];
-var all_users = [];
 var users = {};
 var games = { id: {}, day: {} };
 
-function noteUser(user) {
-	if (user) users[user.id] = user;
+function pickUser() {
+	var $user_picker = gen('.modal.user-picker', null, document.body);
+	$("div.page").hide();
+	function exit(id) {
+		return function() {
+			$("div.page").show();
+			$user_picker.trigger('closeModal');
+			$user_picker.remove();
+			d.resolve(id);
+		}
+	}
+	var d = Q.defer();
+	$user_picker.gen('button', {text: 'cancel', click: exit('cancelled')});
+	var table = $user_picker.gen('table');
+	var users_spec = table.gen('tr');
+	users_spec.gen('th', 'ID');
+	users_spec.gen('th', '');
+	users_spec.gen('th', 'Name');
+	users_spec.gen('th', 'Email');
+	Object.keys(users).map(id => {
+		var row = table.gen('tr');
+		var user = users[id];
+		row.gen('td', user.id);
+		row.gen('td/button', {text: 'select', click: exit(user.id)});
+		row.gen('td', user.displayName);
+		row.gen('td', user.userEmail);
+	});
+	$user_picker.easyModal({hasVariableWidth: true});
+	$user_picker.trigger('openModal');
+	return d.promise;
 }
 
-var seen = {};
-
-function enableSearch() {
+function enableSearch(all_games) {
+	var seen = {};
 	if (all_games.length) {
+		games = { id: {}, day: {} };
 		omni_button.text("Hide Full Games");
 		var tbody = $("table.gamelist > tbody");
 		all_games.forEach(game => {
@@ -41,12 +67,10 @@ function enableSearch() {
 				// console.log(JSON.stringify(game, null, 2));
 			}
 			games.id[game.eventId] = game;
-			noteUser(game.eventOwner);
 			games.day[game.eventStartDate] = games.day[game.eventStartDate] || [];
 			games.day[game.eventStartDate].push(game);
 			seen[game.eventStartDate] = seen[game.eventStartDate] || 0;
 			++seen[game.eventStartDate];
-			game.attendees.map(noteUser);
 			game.eventName = game.eventName || 'NULL';
 			game.attendees = game.attendees || [];
 			game.eventAttributes = game.eventAttributes || {};
@@ -68,30 +92,74 @@ function enableSearch() {
 			thead.gen('td.gm', 'GM');
 			thead.gen('td.length', 'Length');
 			thead.gen('td.available', 'Available');
+			thead.gen('td.type', 'Type');
 
 			var tbody = gamelist.gen('tbody');
 			todays_games.map(game => {
-				var row = tbody.gen('tr');
+				var row = tbody.gen('tr.game-summary');
 
 				var dump = Object.assign({}, game);
 				delete dump.postContent;
-				var html = game.postContent;
-				var expando = tbody.gen('tr/td', {colspan: 10, style: 'display: none', html});
+				var text = game.postContent;
+				var expando = tbody.gen('tr/td', {colspan: 10, style: 'display: none'});
+				function quick(hook, ...args) {
+					args.unshift(game.eventId);
+					console.log(args);
+					return api.bookings[hook].apply(null, args).then(resp => {
+						alert(hook +':\n' + JSON.stringify(resp, null, 2));
+						return resp;
+					}, err => {
+						alert(hook +':\n' + JSON.stringify(err, null, 2));
+						throw err;
+					});
+				}
+				expando.gen('button', {text: 'bookMeIntoGame', click: () => quick('bookMeIntoGame')});
+				expando.gen('button', {text: 'addUserToGame', click: () => quick('addUserToGame')});
+				var users = expando.gen('table');
+				var users_spec = users.gen('tr');
+				users_spec.gen('th', 'Relation');
+				users_spec.gen('th', 'ID');
+				users_spec.gen('th', 'Name');
+				users_spec.gen('th', 'Email');
+				var pcs_signed_up = 0;
+				function showUser(user, type) {
+					console.log({user, type, t: typeof type});
+					if (type !== 'Owner') {
+						type = user.bookingComment || 'PC';
+					}
+					var promotion = false;
+					if (type === 'PC') {
+						++pcs_signed_up;
+						promotion = true;
+					}
+					var row = users.gen('tr');
+					row.gen('td', type);
+					row.gen('td', user.id);
+					row.gen('td', user.displayName);
+					row.gen('td', user.userEmail);
+					if (type !== 'Owner') {
+						row.gen('td/button', {text: 'kick', click: () => quick('removeUserFromGame', user.id)});
+						row.gen('td/button', {text: promotion ? 'promote': 'demote', click: () => quick('setGmStatusForPlayerInGame', user.id, promotion)});
+					}
+				}
+				showUser(game.eventOwner, 'Owner');
+				game.attendees.map(showUser);
+				expando.gen('p', text);
 				expando.gen('pre', {text: JSON.stringify(dump, null, 2)});
+				row.click(() => {
+					expando.toggle();
+				});
 
 				var start = game.eventStartDate + 'T' + game.eventStartTime;
 				var end = game.eventEndDate + 'T' + game.eventEndTime;
+				var cats = game.categories ? game.categories.map(blob => blob.categoryName).join(', ') : 'NULL';
 				row.gen('td.time', moment(start).format('ha')+'-'+moment(end).format('ha'));
-				row.gen('td.event-name', {
-					text: game.eventName,
-					click: function() {
-						expando.toggle();
-					}
-				});
+				row.gen('td.event-name', game.eventName);
 				row.gen('td.system', game.eventAttributes.System);
 				row.gen('td.gm', game.eventAttributes.GM);
 				row.gen('td.length', game.eventAttributes.Length);
-				row.gen('td.available', game.attendees.length -1 + ' of ' + game.eventAttributes.Players);
+				row.gen('td.available', game.eventAttributes.Players - pcs_signed_up + ' of ' + game.eventAttributes.Players);
+				row.gen('td.type', cats);
 			});
 		});
 	}
@@ -101,36 +169,34 @@ function stateUser() {
 	$("body > .page > section").hide();
 	$("body > .page > section.games").show();
 	omni_button.text("Finding Games...");
-	all_games = [];
-	all_users = [];
-	var g = localStorage.getItem('games');
-	g = null;
-	if (g) {
-		g = JSON.parse(g);
-		all_games = g;
-		return enableSearch();
+	if (0) {
+		var g = localStorage.getItem('games');
+		// g = null;
+		if (g) {
+			g = JSON.parse(g);
+			return enableSearch(g);
+		}
+		api.events.all().then(resp => {
+			localStorage.setItem('games', JSON.stringify(resp.body));
+			enableSearch(resp.body);
+		}, e=> {
+			console.log("failed to /events/all:");
+			console.error(e);
+		});
+	} else {
+		api.events.year(2018).then(resp => {
+			enableSearch(resp.body);
+		}, e=> {
+			console.log("failed to /events/all:");
+			console.error(e);
+		});
 	}
-	if (0) api.events.all().then(resp => {
-		all_games = resp.body;
-		localStorage.setItem('games', JSON.stringify(all_games));
-		enableSearch();
-	}, e=> {
-		console.log("failed to /events/all:");
-		console.error(e);
-	});
-	else
-	api.events.year(2018).then(resp => {
-		all_games = resp.body;
-		// localStorage.setItem('games', JSON.stringify(all_games));
-		enableSearch();
-	}, e=> {
-		console.log("failed to /events/all:");
-		console.error(e);
-	});
 	api.users.all().then(resp => {
 		if (resp.code === 403) return;
-		all_users = resp.body;
-		enableSearch();
+		resp.body.map(user => {
+			users[user.id] = user;
+		});
+		// enableSearch();
 	}, e=> {
 		console.log("failed to /users/all:");
 		console.error(e);
@@ -138,6 +204,7 @@ function stateUser() {
 }
 
 function stateAdmin() {
+	console.log("grats");
 	stateUser();
 }
 
@@ -165,12 +232,12 @@ document.addEventListener('deviceready', function() {
 	$display.find('.listening').hide();
 	$display.find('.received').show();
 
-	var $login_modal = gen('.login', null, document.body);
+	var $login_modal = gen('.modal.login', null, document.body);
 	var udata = {placeholder: 'username'};
 	var pdata = {placeholder: 'password'};
 	if (0) {
 		// xander's api debugging mode
-		udata.value = 'Xander';
+		udata.value = 'SantaWolf';
 		pdata.value = 'brake68care48dust94fire';
 	}
 
@@ -181,7 +248,6 @@ document.addEventListener('deviceready', function() {
 		click() {
 			console.log("logging in", user.val(), pass.val());
 			api.login(user.val(), pass.val()).done(s => {
-				console.log('wtf', s);
 				$login_modal.trigger('closeModal');
 				localStorage.setItem('Authorization', s);
 				testSession(s);

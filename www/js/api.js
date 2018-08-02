@@ -11,16 +11,26 @@ api.login = (username, password) => {
 api.bookings = {
 	addUserToGame(eventId, userId) {
 		console.error("untested");
+		if (userId === undefined) {
+			return pickUser().then(id => {
+				if (id !== 'cancelled') {
+					return api.bookings.addUserToGame(eventId, id);
+				}
+			});
+		}
 		return api.post('bookings/addUserToGame', {eventId, userId});
 	},
-
 	bookMeIntoGame(gameId) {
-		console.error("untested");
+		console.error("untested", gameId);
 		return api.post('bookings/bookMeIntoGame', {gameId});
 	},
 	removeUserFromGame(eventId, userId) {
 		console.error("untested");
 		return api.post('bookings/removeUserFromGame', {eventId, userId});
+	},
+	setGmStatusForPlayerInGame(eventId, userId, isGm) {
+		console.error("untested");
+		return api.post('bookings/setGmStatusForPlayerInGame', {eventId, userId, isGm});
 	}
 };
 
@@ -46,7 +56,6 @@ api.events = {
 };
 api.users = {
 	all() {
-		console.error("untested");
 		return api.post('users/all');
 	},
 	id(id) {
