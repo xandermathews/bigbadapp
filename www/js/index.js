@@ -28,7 +28,6 @@ function pickUser() {
 	$("div.page").hide();
 	function exit(id) {
 		return function() {
-			$("div.page").show();
 			$user_picker.trigger('closeModal');
 			$user_picker.remove();
 			d.resolve(id);
@@ -50,7 +49,12 @@ function pickUser() {
 		row.gen('td', user.displayName);
 		row.gen('td', user.userEmail);
 	});
-	$user_picker.easyModal({hasVariableWidth: true});
+	$user_picker.easyModal({
+		hasVariableWidth: true,
+		onClose: () => {
+			$("div.page").show();
+		}
+	});
 	$user_picker.trigger('openModal');
 	return d.promise;
 }
