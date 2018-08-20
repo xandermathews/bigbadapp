@@ -1,11 +1,12 @@
 "use strict";
 
-function gen(key, attrs, parent) {
+window.gen = function(key, attrs, parent) {
 	key = key || 'div';
 	attrs = attrs || {};
+	if (typeof attrs === 'function') attrs = {click: attrs};
 	if (typeof attrs !== 'object') attrs = {text: attrs};
 
-	key = key.split('/');
+	key = key.split(/[/>]/);
 	if (key.length > 1) {
 		var node = gen(key.shift(), null, parent);
 		while (key.length > 1) {
@@ -15,11 +16,17 @@ function gen(key, attrs, parent) {
 	}
 
 	key = key[0].split('.');
-	var tag = key[0] || 'div';
-	key.shift();
+	var tag_and_id = key.shift().split('#');
+	var tag = tag_and_id.shift() || 'div';
+	var id = tag_and_id.shift();
 	if (key.length) attrs.class = key.join(' ');
+	if (id) attrs.id = id;
 	var ele = $('<'+tag+'>', attrs);
 	if (parent) ele.appendTo($(parent));
+	return gen.decorate(ele);
+}
+
+gen.decorate = function(ele) {
 	ele.gen = function(key, attrs) {
 		var child = gen(key, attrs, ele);
 		if (child[0].tagName === 'TABLE') {

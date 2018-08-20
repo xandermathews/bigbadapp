@@ -38,20 +38,26 @@ api.events = {
 	all() {
 		return api.get('events/all');
 	},
+	// TODO https://bigbad8ram.ashnazg.com/api/swagger-ui.html#!/events-controller/findByCategoryUsingGET
+	// TODO https://bigbad8ram.ashnazg.com/api/swagger-ui.html#!/events-controller/getCountUsingGET
+	// TODO https://bigbad8ram.ashnazg.com/api/swagger-ui.html#!/events-controller/getCountForYearUsingGET
 	find(id) {
-		console.error("untested");
 		return api.post('events/find', {id});
+	},
+	// TODO https://bigbad8ram.ashnazg.com/api/swagger-ui.html#!/events-controller/findForMeUsingGET
+	// TODO https://bigbad8ram.ashnazg.com/api/swagger-ui.html#!/events-controller/findForMeForYearUsingGET
+	// TODO GET /events/page/{length}/{offset} https://bigbad8ram.ashnazg.com/api/swagger-ui.html#!/events-controller/findPageUsingGET
+	since(epoch) {
+		return api.get('events/since/'+ epoch);
+	},
+	user(id) {
+		return api.post2('events/user', {id});
 	},
 	year(yr) {
 		return api.get('events/year/'+yr);
 	},
-	user(id) {
-		console.error("untested");
-		return api.post('events/user', {id});
-	},
 	me() {
-		console.error("untested");
-		return api.get('events/me');
+		return api.get2('events/me');
 	},
 };
 api.users = {
@@ -59,11 +65,9 @@ api.users = {
 		return api.post('users/all');
 	},
 	id(id) {
-		console.error("untested");
 		return api.post('users/id', {id});
 	},
 	me() {
-		console.error("untested");
 		return api.post('users/me');
 	},
 	username() {
@@ -76,3 +80,10 @@ api.users.me.isadmin = () => {
 	return api.post('users/me/isadmin');
 };
 
+api.post2 = function() {
+	return api.post.apply(null, arguments).then(resp => resp.body);
+}
+
+api.get2 = function() {
+	return api.get.apply(null, arguments).then(resp => resp.body);
+}

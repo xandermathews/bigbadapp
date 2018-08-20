@@ -17,7 +17,7 @@ button.login {
 	}
 }
 
-div.modal {
+div.quickmodal {
 	background-color: white;
 	border-radius: 10px;
 	padding: 20px;
@@ -31,6 +31,11 @@ div.modal {
 		&.user {
 		}
 	}
+	&.login {
+	}
+	&.nowrap {
+		white-space: nowrap;
+	}
 }
 
 div.user-picker {
@@ -38,4 +43,13 @@ div.user-picker {
 	height: 95%;
 	overflow-x: scroll;
 	overflow-y: scroll;
+}
+
+table.padded > tr {
+	> td, > th {
+		padding-left: 20px;
+		&:first-child {
+			padding-left: 0;
+		}
+	}
 }
