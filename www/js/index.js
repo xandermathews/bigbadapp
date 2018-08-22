@@ -382,7 +382,7 @@ document.addEventListener('deviceready', function() {
 	var $login_modal = gen('.quickmodal.login', null, document.body);
 	var udata = {placeholder: 'username'};
 	var pdata = {placeholder: 'password'};
-	if (1) {
+	if (0) {
 		// xander's api debugging mode
 		udata.value = 'SantaWolf'; // my admin role
 		// udata.value = 'Xander'; // my real life bbc player role
@@ -418,6 +418,7 @@ document.addEventListener('deviceready', function() {
 			case 'Login':
 				$login_modal.trigger('openModal');
 			break;
+			default:
 			case 'Finding Games...':
 			case 'Logout':
 				localStorage.removeItem('Authorization');

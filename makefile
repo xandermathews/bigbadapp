@@ -10,6 +10,10 @@ browser:
 	[[ -d platforms/browser/ ]] || cordova prepare browser
 	cordova run browser --device -- --live-reload
 
+website:
+	cordova build browser --prod --release
+	rsync www/ b:/var/www/nginx/
+
 # this is same as "browser", except dropping the live reload component that causes the first render to have several errors.
 demo:
 	[[ -d platforms/browser/ ]] || cordova prepare browser
