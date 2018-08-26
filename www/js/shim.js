@@ -1,22 +1,35 @@
 (function() {
 	"use strict";
+	var dbg_shim = 0;
 	window.$ = jQuery;
 	var js = '/wp-content/themes/atahualpa/js/';
 	var lib = '/wp-content/themes/atahualpa/plugins/xandermagic-libraries/';
 
+	$("body").ajaxError(function(e, jqxhr, settings, exception) {
+		console.error({e, settings, exception, jqxhr});
+	});
 	function run(urls, then) {
-		// var s = $('<script>', {src: url}).appendTo(document.body);
-		if (!urls || urls.length === 0) {
-			if (then) then();
-			return;
+		if (0) {
+			urls.map(src => {
+				if (dbg_shim) console.log("loading", src);
+				$('<script>', {src}).appendTo(document.body);
+			});
+			setTimeout(then, 1000);
+		} else {
+			if (!urls || urls.length === 0) {
+				if (then) then();
+				return;
+			}
+			var url = urls.shift();
+
+			if (dbg_shim) console.log("attempting", url);
+			$.getScript(url, function() {
+				if (dbg_shim) console.log("loaded", url);
+				setTimeout(function() {
+					run(urls, then);
+				}, 1);
+			});
 		}
-		var url = urls.shift();
-		$.getScript(url, function() {
-			console.log("loaded", url);
-			setTimeout(function() {
-				run(urls, then);
-			}, 1);
-		});
 	}
 
 	function init() {
@@ -25,17 +38,19 @@
 		if (logout_button.length + login_button.length === 0) return setTimeout(init, 100);
 
 		login_button.click(function(ev) {
-			console.log("login attempted");
+			if (dbg_shim) console.log("login attempted");
 			if (magic.login()) {
+				console.log("magic said bail");
 				event.preventDefault();
 				event.stopImmediatePropagation();
 				return false;
 			}
+			console.log("magic said ok");
 		});
 
 		logout_button.click(function(ev) {
 			localStorage.removeItem('Authorization');
-			console.log("CLICKED");
+			if (dbg_shim) console.log("CLICKED");
 			// var url = $(this).attr('href');
 			// location = url;
 
@@ -51,10 +66,12 @@
 			lib+'api.js',
 			js+'magic.js'
 		], function() {
+			if (dbg_shim) console.log("all shims loaded");
 			magic.testSessionDesync(logout_button);
+			if (location.host !== 'www.logictwine.com') return; // in prod, none of the rest is needed
 			return gen('button', {
 				text: 'run patcher',
-				style: "position: fixed; top: 0; opacity: .2;",
+				style: "position: fixed; top: 50px; opacity: .2; z-index: 10",
 				click: function() {
 					run([
 						lib+"fetch-api.js",

@@ -382,7 +382,7 @@ document.addEventListener('deviceready', function() {
 	var $login_modal = gen('.quickmodal.login', null, document.body);
 	var udata = {placeholder: 'username'};
 	var pdata = {placeholder: 'password'};
-	if (0) {
+	if (1) {
 		// xander's api debugging mode
 		udata.value = 'SantaWolf'; // my admin role
 		// udata.value = 'Xander'; // my real life bbc player role

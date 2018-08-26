@@ -12,7 +12,7 @@ browser:
 
 website:
 	cordova build browser --prod --release
-	rsync www/ b:/var/www/nginx/
+	rsync2 www/ b:/var/www/nginx/
 
 # this is same as "browser", except dropping the live reload component that causes the first render to have several errors.
 demo:

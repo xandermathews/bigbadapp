@@ -1,12 +1,63 @@
 "use strict";
 
+var dbg_api_init = 0;
+if (dbg_api_init) console.log("api started");
 api.base_url = 'https://bigbad8ram.ashnazg.com/api/';
+
 api.login = (username, password) => {
+	api.authorization = null;
+	localStorage.removeItem('Authorization');
+	localStorage.removeItem('state');
+	api.state = {};
 	return api.post('login', {username, password}).then(resp => {
 		if (resp.code !== 200) throw resp;
-		return resp.headers.authorization;
+		var auth = resp.headers.authorization;
+		api.authorization = auth;
+		localStorage.setItem('Authorization', auth);
+		return api.refreshState();
 	});
 };
+
+if (dbg_api_init) console.log("api started2");
+api.refreshState = (fast) => {
+	if (!api.authorization) return console.log("can't refresh state, have no api auth key");
+	if (dbg_api_init) console.log("refreshing state", fast?"fast":"slow");
+
+	var fin;
+	var events = api.events.me().then(list_of_games => {
+		if (dbg_api_init) console.log("e?", list_of_games);
+		var events = {};
+		list_of_games.map(game => {
+			events[game.eventId] = game;
+			if (dbg_api_init) console.info(game.eventId, game);
+		});
+		return api.state.my_events = events; // must _return_ to support being mixed with users.me()
+	});
+
+	if (fast) {
+		fin = events;
+	} else {
+		// NOTE: users.me() nukes the other two, hence the lack of saving it directly to state.
+		var me = api.users.me().then(resp_me => {
+			return resp_me.body;
+		});
+		var isadmin = api.users.me.isadmin().then(resp_isadmin => {
+			return api.state.isadmin = resp_isadmin && resp_isadmin.body === true;
+		});
+
+		fin = Q.all([me, isadmin, events]).then(results => {
+			api.state = results[0];
+			api.state.isadmin = results[1];
+			api.state.my_events = results[2];
+		});
+	}
+	return fin.then(() => {
+		localStorage.setItem('state', JSON.stringify(api.state));
+		api.state.fresh = true;
+		return api.state;
+	});
+};
+if (dbg_api_init) console.log("api started3");
 
 api.bookings = {
 	addUserToGame(eventId, userId) {
@@ -21,7 +72,6 @@ api.bookings = {
 		return api.post('bookings/addUserToGame', {eventId, userId});
 	},
 	bookMeIntoGame(gameId) {
-		console.error("untested", gameId);
 		return api.post('bookings/bookMeIntoGame', {gameId});
 	},
 	removeUserFromGame(eventId, userId) {
@@ -87,3 +137,26 @@ api.post2 = function() {
 api.get2 = function() {
 	return api.get.apply(null, arguments).then(resp => resp.body);
 }
+
+if (dbg_api_init) console.log("api started lastly");
+(function() {
+	api.authorization = localStorage.getItem('Authorization');
+	if (!api.authorization) return console.log("can't refresh state, have no api auth key");
+
+	if (!api.state) {
+		if (dbg_api_init) console.log("init api.state");
+		api.state = {};
+		try {
+			var cache = localStorage.getItem('state');
+			if (cache) cache = JSON.parse(cache);
+			api.state = cache;
+			api.state.fresh = false;
+			if (dbg_api_init) console.log("loaded", cache);
+		} catch (e) {
+			console.error("error during state recovery", e);
+		}
+	}
+
+	api.refreshState(api.state.id != undefined);
+})();
+if (dbg_api_init) console.log("api loaded");

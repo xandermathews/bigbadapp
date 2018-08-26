@@ -1,5 +1,24 @@
 "use strict";
 
+$.fn.enable = function(state) {
+    if (state === undefined) state = true;
+    return this.attr('disabled', !state);
+};
+$.fn.disable = function() {
+    return this.attr('disabled', true);
+};
+$.fn.readonly = function(state) {
+    if (state === undefined) state = true;
+    return this.attr('readonly', state);
+};
+$.fn.writable = function() {
+    return this.attr('readonly', false);
+};
+
+$.fn.gen2 = function(k, a) {
+	return window.gen(k, a, this);
+};
+
 window.gen = function(key, attrs, parent) {
 	key = key || 'div';
 	attrs = attrs || {};
