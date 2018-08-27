@@ -1,7 +1,7 @@
 (function() {
 	"use strict";
-	var dbg_booking = 0;
-	var dbg_login = 0;
+	var dbg_booking = 1;
+	var dbg_login = 1;
 	var redundant_looping_block = null; // paranoia about there being some browser bug that causes my "login, retry form submission" to go into an infinite loop.
 
 	function testSession() {
@@ -11,33 +11,46 @@
 		return null;
 	}
 
+	function dualSession() {
+		try {
+			if (testSession()) return false; // let wordpress get the event
+
+			var form = $(".lwa-form, #loginform");
+			var user = form.find('input[name="log"]').val();
+			var pass = form.find('input[name="pwd"]').val();
+
+			var trying = user + pass;
+			if (trying === redundant_looping_block) return true;
+			redundant_looping_block = trying;
+
+			api.login(user, pass).done(s => {
+				if (dbg_login) console.log("login:",s);
+				var login_button = $("#lwa_wp-submit, #wp-submit");
+				if (s) login_button.click(); // resubmit event; which will just get to the jwt test.
+			}, err => {
+				console.error(err);
+				if (err.body && err.body.message) alert(err.body.message);
+				else alert("FAIL: "+ JSON.stringify(err, null, 2));
+			});
+		} catch (err) {
+			console.error(err);
+			alert("FAIL: "+ JSON.stringify(err, null, 2));
+		}
+		return true; //block event
+	}
+
 	window.magic = {
 		login: function() {
-			try {
-				if (testSession()) return false; // let wordpress get the event
-
-				var form = $(".lwa-form, #loginform");
-				var user = form.find('input[name="log"]').val();
-				var pass = form.find('input[name="pwd"]').val();
-
-				var trying = user + pass;
-				if (trying === redundant_looping_block) return true;
-				redundant_looping_block = trying;
-
-				api.login(user, pass).done(s => {
-					if (dbg_login) console.log("login:",s);
-					var login_button = $("#lwa_wp-submit, #wp-submit");
-					if (s) login_button.click(); // resubmit event; which will just get to the jwt test.
-				}, err => {
-					console.error(err);
-					if (err.body && err.body.message) alert(err.body.message);
-					else alert("FAIL: "+ JSON.stringify(err, null, 2));
-				});
-			} catch (err) {
-				console.error(err);
-				alert("FAIL: "+ JSON.stringify(err, null, 2));
+			switch (location.pathname) {
+				case '/wp-login.php':
+					switch (location.search) {
+						case '?loggedout=true':
+						case '':
+							return dualSession();
+					}
+					return false;
 			}
-			return true; //block event
+			return dualSession();
 		},
 
 		testSessionDesync: function(logout_button) {
@@ -66,34 +79,49 @@
 	};
 	var test = /^Event ID ([0-9]+)$/;
 	function installButton() {
-		if (api.state && api.state.fresh) return $("p").filter(function(i, e) {
-			var $e = $(e);
-			var t = $e.text();
-			var matches = t.match(test);
-			if (matches) {
-				var gid = matches[1];
-				if (dbg_booking) console.log(JSON.stringify(api.state.my_events, null, 2));
-				var text = "Book Me";
-				var already = false;
-				if (api.state.my_events[gid]) {
-					text = 'Leave Game';
-					already = true;
-				}
-				text += ' ' + gid;
-				if (dbg_booking) console.log({testing: gid, entry: api.state.my_events[gid], text});
-				var button;
-				$e.replaceWith(button = gen('button.bookme', {
-					text,
-					click() {
+		if (api.state && api.state.fresh) {
+			var legacy_bookme = $(".em-booking-button");
+			var legacy_cancel = $(".em-cancel-button");
+			if (legacy_bookme.length + legacy_cancel.length === 0) return;
+			return $("p").filter(function(i, e) {
+				var $e = $(e);
+				var t = $e.text();
+				var matches = t.match(test);
+				if (matches) {
+					var gid = matches[1];
+					if (dbg_booking) console.log(JSON.stringify(api.state.my_events, null, 2));
+
+					legacy_cancel.click(() => {
+						console.log("user is canceling", gid, api.state.id);
+					});
+					legacy_bookme.unbind("click").show();
+					legacy_bookme.click(() => {
+						console.log("user is booking", gid, api.state.id);
 						magic.bookme(gid, $(this));
+					});
+
+					var text = "Book Me";
+					var already = false;
+					if (api.state.my_events[gid]) {
+						text = 'Leave Game';
+						already = true;
 					}
-				}));
-				if (already) button.disable();
-			}
-		});
+					text += ' ' + gid;
+					if (dbg_booking) console.log({testing: gid, entry: api.state.my_events[gid], text});
+					var button;
+					$e.replaceWith(button = gen('button.bookme', {
+						text,
+						click() {
+							magic.bookme(gid, $(this));
+						}
+					}));
+					if (already) button.disable();
+				}
+			});
+		}
 
 		setTimeout(installButton, 100);
 	}
 	installButton();
-	// console.log("magic.js loaded", {location});
+	console.log("magic.js loaded", {location});
 })();

@@ -1,3 +1,4 @@
+d: full
 fast:
 	rsync2 magic.js l:~/js/
 

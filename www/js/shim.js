@@ -1,6 +1,6 @@
 (function() {
 	"use strict";
-	var dbg_shim = 0;
+	var dbg_shim = 1;
 	window.$ = jQuery;
 	var js = '/wp-content/themes/atahualpa/js/';
 	var lib = '/wp-content/themes/atahualpa/plugins/xandermagic-libraries/';
