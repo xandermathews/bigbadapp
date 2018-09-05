@@ -29,8 +29,17 @@
 				if (s) login_button.click(); // resubmit event; which will just get to the jwt test.
 			}, err => {
 				console.error(err);
-				if (err.body && err.body.message) alert(err.body.message);
-				else alert("FAIL: "+ JSON.stringify(err, null, 2));
+				if (err.body && err.body.message) return alert(err.body.message);
+				try {
+					if (err.request && err.request.conf && err.request.conf.body) {
+						var parsed = JSON.parse(err.request.conf.body);
+						if (parsed.password) parsed.password = '[REDACTED]';
+						err.request.conf.body = parsed;
+					}
+				} catch (e) {
+					console.error("redactor failed", e);
+				}
+				alert("FAIL: "+ JSON.stringify(err, null, 2));
 			});
 		} catch (err) {
 			console.error(err);
@@ -107,7 +116,6 @@
 		setTimeout(installButton, 100);
 	}
 	installButton();
-	console.log("magic.js loaded", {location});
 })();
 
 window.LIB_LOADING = window.LIB_LOADING || {};

@@ -2,12 +2,33 @@
 	"use strict";
 	// true disables all xander magic (other than a one line css fix, since the css isn't dynamic.)
 	// false enables ajax-everything.
-	var SAFETY = true;
+	var SAFETY = false;
 
 	if (SAFETY) {
-		var legacy_bookme = jQuery(".em-booking-button");
-		return legacy_bookme.show();
+		function enableLegacy() {
+			var legacy_bookme = jQuery(".em-booking-button");
+			if (legacy_bookme.length) return legacy_bookme.show();
+			setTimeout(enableLegacy, 100);
+		}
+		return enableLegacy();
 	}
+	var absurl;
+	function deathRattle(msg, line, col) {
+		if (line) msg += ' line '+line;
+		if (col) msg += ' col '+col;
+		alert(absurl + " did not complete, try reloading the page or contacting tech support and showing them this error\n" + msg);
+	}
+
+	window.onerror = function(msg, url, line, col, error) {
+		console.log({OLD: msg, url, line, col, error, absurl});
+		if (absurl === url) deathRattle(msg, line, col);
+	}
+	/* nobody's using the above hook, so I don't have to feel bad for using it.
+	console.log({olderr: window.onerror});
+	window.addEventListener('error', function(err) {
+		console.log(err);
+	}, false);
+	*/
 
 	var dbg_shim = 1;
 	window.$ = jQuery;
@@ -18,49 +39,27 @@
 		console.error({e, settings, exception, jqxhr});
 	});
 	function run(urls, then) {
-		if (1) {
-			if (urls.length) {
-				var url = urls.shift();
-				var stem = url.replace(/^.*\//, '').replace(/\.js$/, '');
-				console.log("loading", url, stem);
-				var script = document.createElement('script');
-				script.setAttribute('src', url);
-				window.LIB_LOADING = window.LIB_LOADING || {};
-				script.onload = function() {
-					setTimeout(() => {
-						if (!window.LIB_LOADING[stem]) alert(url + " did not complete, try reloading the page or contacting tech support");
-						else return run(urls, then);
-					}, 1);
-				}
-				script.onerror = function() {
-					// this triggers on network errors, but not on parse errors.
-					console.error(url + " had error", arguments);
-				};
-				document.body.appendChild(script);
-			} else {
-				console.log("running then");
-				if (then) then();
-			}
-		} else if (0) {
-			urls.map(src => {
-				if (dbg_shim) console.log("loading", src);
-				$('<script>', {src}).appendTo(document.body);
-			});
-			setTimeout(then, 1000);
-		} else {
-			if (!urls || urls.length === 0) {
-				if (then) then();
-				return;
-			}
+		if (urls.length) {
 			var url = urls.shift();
-
-			if (dbg_shim) console.log("attempting", url);
-			$.getScript(url, function() {
-				if (dbg_shim) console.log("loaded", url);
-				setTimeout(function() {
-					run(urls, then);
+			absurl = location.protocol + '//' + location.hostname + url;
+			var stem = url.replace(/^.*\//, '').replace(/\.js$/, '');
+			console.log("loading", url, stem);
+			var script = document.createElement('script');
+			script.setAttribute('src', url);
+			window.LIB_LOADING = window.LIB_LOADING || {};
+			script.onload = function() {
+				setTimeout(() => {
+					if (!window.LIB_LOADING[stem]) deathRattle(stem +' did not init');
+					else return run(urls, then);
 				}, 1);
-			});
+			}
+			script.onerror = function() {
+				// this triggers on network errors, but not on parse errors.
+				console.error(url + " had error", arguments);
+			};
+			document.body.appendChild(script);
+		} else {
+			if (then) then();
 		}
 	}
 
@@ -73,8 +72,8 @@
 			if (dbg_shim) console.log("login attempted");
 			if (magic.login()) {
 				console.log("magic said bail");
-				event.preventDefault();
-				event.stopImmediatePropagation();
+				ev.preventDefault();
+				ev.stopImmediatePropagation();
 				return false;
 			}
 			console.log("magic said ok");
@@ -113,29 +112,6 @@
 					]);
 				}
 			}, document.body);
-			function hash(s) {
-				var adder = 0;
-				var hash = 0;
-				for (var i = 0; i < s.length; ++i) {
-					adder += s.charCodeAt(i);
-					hash += adder;
-				}
-				return hash;
-			}
-			var last_hashes = {};
-			function livereload(url) {
-				api.get(url).then(resp => {
-					console.log({given: resp.body, hash: hash(resp.body)});
-					var hashval = hash(resp.body);
-					if (last_hashes[url] !== hashval) {
-						last_hashes[url] = hashval;
-						run([url], function() {});
-					}
-					// setTimeout(livereload, 1000);
-				});
-			}
-			livereload(js+'magic.js');
-			livereload(lib+'api.js');
 		});
 	}
 	init();

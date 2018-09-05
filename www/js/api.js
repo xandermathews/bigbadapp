@@ -154,7 +154,7 @@ if (dbg_api_init) console.log("api started lastly");
 		try {
 			var cache = localStorage.getItem('state');
 			if (cache) cache = JSON.parse(cache);
-			api.state = cache;
+			if (cache) api.state = cache;
 			api.state.fresh = false;
 			if (dbg_api_init) console.log("loaded", cache);
 		} catch (e) {
