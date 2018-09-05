@@ -1,7 +1,7 @@
 (function() {
 	"use strict";
-	var dbg_booking = 1;
-	var dbg_login = 1;
+	var dbg_booking = 0;
+	var dbg_login = 0;
 	var redundant_looping_block = null; // paranoia about there being some browser bug that causes my "login, retry form submission" to go into an infinite loop.
 
 	function testSession() {
@@ -62,61 +62,45 @@
 		},
 
 		bookme: function(gid, button) {
-			if (dbg_booking) console.log({booking: api.state.id, into: gid, button, auth: api.authorization});
-			if (api.state.my_events[gid]) {
+			if (dbg_booking) console.log({bstate: button.text(), booking: api.state.id, into: gid, button, auth: api.authorization});
+			switch (button.text()) {
+				case 'Cancel':
+					return alert("you're already booked");
+
+				case 'Book Now':
+					button.text("Working...").disable();
+					return api.bookings.bookMeIntoGame(gid).done(resp => {
+						if (dbg_booking) console.log("booking:", resp);
+						if (resp.code === 403 || resp.body.status === 'FAILURE') {
+							button.text("Book Now").enable();
+						} else {
+							location.reload(true);
+						}
+						if (resp.body.message !== 'BOOKED') return alert(resp.body.message);
+					});
 			}
-			button.text("Working...").disable();
-			api.bookings.bookMeIntoGame(gid).done(resp => {
-				if (dbg_booking) console.log("booking:", resp);
-				if (resp.code === 403 || resp.body.status === 'FAILURE') {
-					button.text("Book Me").enable();
-				} else {
-					button.text("Leave Game")//.enable();
-				}
-				return alert(resp.body.message);
-			});
 		}
 	};
-	var test = /^Event ID ([0-9]+)$/;
 	function installButton() {
 		if (api.state && api.state.fresh) {
 			var legacy_bookme = $(".em-booking-button");
 			var legacy_cancel = $(".em-cancel-button");
-			if (legacy_bookme.length + legacy_cancel.length === 0) return;
-			return $("p").filter(function(i, e) {
+
+			if (legacy_bookme.length + legacy_cancel.length) return $("span.eventid").filter(function(i, e) {
 				var $e = $(e);
-				var t = $e.text();
-				var matches = t.match(test);
-				if (matches) {
-					var gid = matches[1];
-					if (dbg_booking) console.log(JSON.stringify(api.state.my_events, null, 2));
+				var gid = e.getAttribute('data-id');
+				if (dbg_booking) console.log(JSON.stringify(api.state.my_events, null, 2));
 
-					legacy_cancel.click(() => {
-						console.log("user is canceling", gid, api.state.id);
-					});
-					legacy_bookme.unbind("click").show();
-					legacy_bookme.click(() => {
-						console.log("user is booking", gid, api.state.id);
-						magic.bookme(gid, $(this));
-					});
+				legacy_cancel.click(() => {
+					console.log("user is cancelling", gid, api.state.id);
+				});
+				legacy_bookme.unbind("click").show();
+				legacy_bookme.click(() => {
+					console.log("user is booking", gid, api.state.id);
+					magic.bookme(gid, legacy_bookme);
+				});
 
-					var text = "Book Me";
-					var already = false;
-					if (api.state.my_events[gid]) {
-						text = 'Leave Game';
-						already = true;
-					}
-					text += ' ' + gid;
-					if (dbg_booking) console.log({testing: gid, entry: api.state.my_events[gid], text});
-					var button;
-					$e.replaceWith(button = gen('button.bookme', {
-						text,
-						click() {
-							magic.bookme(gid, $(this));
-						}
-					}));
-					if (already) button.disable();
-				}
+				// if (dbg_booking) console.log({testing: gid, entry: api.state.my_events[gid], text});
 			});
 		}
 
@@ -125,3 +109,6 @@
 	installButton();
 	console.log("magic.js loaded", {location});
 })();
+
+window.LIB_LOADING = window.LIB_LOADING || {};
+window.LIB_LOADING['magic'] = true;

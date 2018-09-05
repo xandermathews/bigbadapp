@@ -2,7 +2,12 @@
 
 var dbg_api_init = 0;
 if (dbg_api_init) console.log("api started");
-api.base_url = 'https://bigbad8ram.ashnazg.com/api/';
+if (location.hostname === 'www.logictwine.com') {
+	api.base_url = 'https://bigbadcon.com:8091/apidev/';
+} else {
+	api.base_url = 'https://bigbadcon.com:8091/api/';
+}
+console.log({base: api.base_url});
 
 api.login = (username, password) => {
 	api.authorization = null;
@@ -160,3 +165,6 @@ if (dbg_api_init) console.log("api started lastly");
 	api.refreshState(api.state.id != undefined);
 })();
 if (dbg_api_init) console.log("api loaded");
+window.LIB_LOADING = window.LIB_LOADING || {};
+window.LIB_LOADING['api'] = true;
+

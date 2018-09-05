@@ -1,5 +1,14 @@
 (function() {
 	"use strict";
+	// true disables all xander magic (other than a one line css fix, since the css isn't dynamic.)
+	// false enables ajax-everything.
+	var SAFETY = true;
+
+	if (SAFETY) {
+		var legacy_bookme = jQuery(".em-booking-button");
+		return legacy_bookme.show();
+	}
+
 	var dbg_shim = 1;
 	window.$ = jQuery;
 	var js = '/wp-content/themes/atahualpa/js/';
@@ -9,7 +18,30 @@
 		console.error({e, settings, exception, jqxhr});
 	});
 	function run(urls, then) {
-		if (0) {
+		if (1) {
+			if (urls.length) {
+				var url = urls.shift();
+				var stem = url.replace(/^.*\//, '').replace(/\.js$/, '');
+				console.log("loading", url, stem);
+				var script = document.createElement('script');
+				script.setAttribute('src', url);
+				window.LIB_LOADING = window.LIB_LOADING || {};
+				script.onload = function() {
+					setTimeout(() => {
+						if (!window.LIB_LOADING[stem]) alert(url + " did not complete, try reloading the page or contacting tech support");
+						else return run(urls, then);
+					}, 1);
+				}
+				script.onerror = function() {
+					// this triggers on network errors, but not on parse errors.
+					console.error(url + " had error", arguments);
+				};
+				document.body.appendChild(script);
+			} else {
+				console.log("running then");
+				if (then) then();
+			}
+		} else if (0) {
 			urls.map(src => {
 				if (dbg_shim) console.log("loading", src);
 				$('<script>', {src}).appendTo(document.body);

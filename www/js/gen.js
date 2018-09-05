@@ -87,3 +87,6 @@ gen.decorate = function(ele) {
 	};
 	return ele;
 }
+window.LIB_LOADING = window.LIB_LOADING || {};
+window.LIB_LOADING['gen'] = true;
+
