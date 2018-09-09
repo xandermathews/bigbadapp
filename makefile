@@ -1,3 +1,6 @@
+dummy:
+	@echo this makefile requires an explicit target, as I keep accidentally running it
+
 setup:
 	./install_pre-reqs.sh ios android
 	cordova requirements
@@ -10,9 +13,12 @@ browser:
 	[[ -d platforms/browser/ ]] || cordova prepare browser
 	cordova run browser --device -- --live-reload
 
-website:
+deploy:
 	cordova build browser --prod --release
-	rsync2 www/ b:/var/www/nginx/
+	# rsync2 www/ b:/var/www/nginx/
+	# sed '/REDACTME/d' -i platforms/browser/www/js/index.js
+	rsync2 platforms/browser/www/ bb:/var/www/nginx/gameadmin
+	rsync2 platforms/browser/www/ bb:/var/www/nginx/gameadminDEV
 
 # this is same as "browser", except dropping the live reload component that causes the first render to have several errors.
 demo:

@@ -1,4 +1,3 @@
-console.log("magic eight ball!");
 (function() {
 	"use strict";
 	var dbg_booking = 0;

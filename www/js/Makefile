@@ -1,16 +1,14 @@
-now: full
+local: polyfill shim
+	rsync2 magic.js fetch-api.js api.js gen.js ../js-vendor/ ~/big-bad-con-site/wp-content/themes/atahualpa/plugins/login-with-ajax
+	rsync -rP ~/big-bad-con-site/wp-content/themes/atahualpa/plugins/login-with-ajax/ l:/home/web/www.logictwine.com/repositories/github/wp-content/themes/atahualpa/plugins/login-with-ajax
 
-fast:
-	rsync2 magic.js l:~/js/
-
-medium: fast
-	rsync2 api.js l:/home/web/www.logictwine.com/repositories/github/wp-content/themes/atahualpa/plugins/xandermagic-libraries
-
-full: preppolyfill
-	rsync2 magic.js shim.js l:~/js/
-	rsync2 ~/boast/fetch-api.js api.js gen.js ../js-vendor/ l:/home/web/www.logictwine.com/repositories/github/wp-content/themes/atahualpa/plugins/xandermagic-libraries
-	ssh l 'cat login-with-ajax/login-with-ajax.js.orig js/shim.js > login-with-ajax/login-with-ajax.js; rm js/shim.js'
-
-preppolyfill:
+../js-vendor/fetch-polyfill.js: ../../node_modules/whatwg-fetch/fetch.js ../js-vendor/fetch-polyfill.footer
 	cat ../../node_modules/whatwg-fetch/fetch.js > ../js-vendor/fetch-polyfill.js
 	cat ../js-vendor/fetch-polyfill.footer      >> ../js-vendor/fetch-polyfill.js
+
+~/big-bad-con-site/wp-content/themes/atahualpa/plugins/login-with-ajax/login-with-ajax.js: shim.js
+	cat ~/big-bad-con-site/wp-content/themes/atahualpa/plugins/login-with-ajax/login-with-ajax.js.orig shim.js > ~/big-bad-con-site/wp-content/themes/atahualpa/plugins/login-with-ajax/login-with-ajax.js
+
+shim: ~/big-bad-con-site/wp-content/themes/atahualpa/plugins/login-with-ajax/login-with-ajax.js
+
+polyfill: ../js-vendor/fetch-polyfill.js

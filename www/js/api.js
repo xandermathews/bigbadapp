@@ -2,14 +2,12 @@
 
 var dbg_api_init = 0;
 if (dbg_api_init) console.log("api started");
-switch (location.hostname) {
-	case 'www.logictwine.com':
-	case 'localhost':
-		api.base_url = 'https://bigbadcon.com:8091/apidev/';
-		break;
-	default:
-		api.base_url = 'https://bigbadcon.com:8091/api/';
+api.base_url = 'https://bigbadcon.com:8091/apidev/';
+if (location.hostname === "www.bigbadcon.com" && !location.pathname.match(/^\/gameadminDEV/)) {
+	api.base_url = 'https://bigbadcon.com:8091/api/';
 }
+
+console.log("API", api.base_url);
 
 api.login = function(username, password) {
 	api.authorization = null;
@@ -151,7 +149,6 @@ if (dbg_api_init) console.log("api started lastly");
 (function() {
 	api.authorization = localStorage.getItem('Authorization');
 	if (!api.authorization) return console.log("can't refresh state, have no api auth key");
-	console.log({found: api.authorization});
 
 	if (!api.state) {
 		if (dbg_api_init) console.log("init api.state");

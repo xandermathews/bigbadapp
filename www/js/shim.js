@@ -1,10 +1,9 @@
-console.log("shim time");
 (function() {
 	"use strict";
 	// true disables all xander magic (other than a one line css fix, since the css isn't dynamic.)
 	// false enables ajax-everything.
 	var SAFETY = false;
-	var dbg_shim = 1;
+	var dbg_shim = 0;
 
 	function enableLegacy() {
 		var legacy_bookme = jQuery(".em-booking-button");
@@ -19,15 +18,15 @@ console.log("shim time");
 		}
 	}
 
-	var js = '/wp-content/themes/atahualpa/js/';
-	var lib = '/wp-content/themes/atahualpa/plugins/xandermagic-libraries/';
+	var lib = '/wp-content/themes/atahualpa/plugins/login-with-ajax/';
 	var modules = [
 		lib+'q.js',
 		lib+"fetch-api.js",
 		lib+'gen.js',
 		lib+'api.js',
-		js+'magic.js'
+		lib+'magic.js'
 	];
+	// if we need to polyfill promises, try https://github.com/taylorhakes/promise-polyfill
 	if (!window.fetch) {
 		modules.unshift(lib+'fetch-polyfill.js');
 	}
@@ -37,7 +36,7 @@ console.log("shim time");
 
 	if (ver && ver[0] < 10) {
 		// ios9 doesn't support syntax currently in use in the modules.
-		console.log("debugging ios9");
+		// FIXED! polyfilled and removed fat-arrow syntax.
 		// SAFETY = true;
 	}
 
@@ -72,7 +71,7 @@ console.log("shim time");
 			var url = urls.shift();
 			absurl = location.protocol + '//' + location.hostname + url;
 			var stem = url.replace(/^.*\//, '').replace(/\.js$/, '');
-			console.log("loading", url, stem);
+			if (dbg_shim) console.log("loading", url, stem);
 			var script = document.createElement('script');
 			script.setAttribute('src', url);
 			window.LIB_LOADING = window.LIB_LOADING || {};
@@ -129,7 +128,7 @@ console.log("shim time");
 				click: function() {
 					run([
 						lib+'api.js',
-						js+'magic.js'
+						lib+'magic.js'
 					]);
 				}
 			}, document.body);

@@ -85,10 +85,9 @@ body {
     .length, .available { display: none }
 }
 
-
-
 // Small devices (landscape phones, 576px and up)
 @media (min-width: 576px) {
+    .gamelist { .length, .available { display: inherit; } }
     .preschedule {
         .gamelist .length {
             display: table-cell;

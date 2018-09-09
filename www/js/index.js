@@ -1,5 +1,8 @@
 "use strict";
 
+var dbg = false;
+var dispair = true;
+
 document.addEventListener('pause', function() {
 	console.log("pause");
 });
@@ -127,7 +130,7 @@ function pickUser() {
 
 function storeGame(game) {
 	if (!game.eventAttributes) {
-		console.warn("game eventAttributes is null:", game);
+		if (!dispair) console.warn("game eventAttributes is null:", game);
 	}
 	games.id[game.eventId] = game;
 	games.day[game.eventStartDate] = games.day[game.eventStartDate] || [];
@@ -140,11 +143,10 @@ function storeGame(game) {
 	});
 }
 
-var dbg = false;
 function updateGameDisplay(id) {
 	var tbody = $(`#game${id}`).parent();
 	var row = $(`#game${id}`);
-	var expando = gen.decorate($(`#expando${id}>td`));
+	var expando = gen.decorate($(`#expando${id}>td.expando`));
 	var game = games.id[id];
 	row.empty();
 	expando.empty();
@@ -176,6 +178,7 @@ function updateGameDisplay(id) {
 	users_spec.gen('th', 'Name');
 	users_spec.gen('th', 'Email');
 	var pcs_signed_up = 0;
+	var attendees = {};
 	function showUser(user, type) {
 		// console.log({user, type, t: typeof type});
 		if (type !== 'Owner') {
@@ -186,47 +189,85 @@ function updateGameDisplay(id) {
 			++pcs_signed_up;
 			promotion = true;
 		}
+		attendees[type] = attendees[type] || [];
+		attendees[type].push(user);
 		var row = users.gen('tr');
 		row.gen('td', type);
 		row.gen('td', user.id);
 		row.gen('td', user.displayName);
 		row.gen('td', user.userEmail);
-		if (type !== 'Owner') {
-			row.gen('td/button', {text: 'kick', click: () => quick('removeUserFromGame', user.id)});
-			row.gen('td/button', {text: promotion ? 'promote': 'demote', click: () => quick('setGmStatusForPlayerInGame', user.id, promotion)});
+		switch (type) {
+			case 'Owner':
+			case 'Host':
+				break;
+			case 'GM':
+			case 'PC':
+				row.gen('td/button', {text: 'kick', click: () => quick('removeUserFromGame', user.id)});
+				row.gen('td/button', {text: promotion ? 'promote': 'demote', click: () => quick('setGmStatusForPlayerInGame', user.id, promotion)});
 		}
 	}
 	showUser(game.eventOwner, 'Owner');
 	game.attendees.map(showUser);
-	expando.gen('p', text);
-	expando.gen('pre', {text: JSON.stringify(dump, null, 2)});
+	expando.gen('p.gamedesc', text);
 
 	var time = 'invalid';
-	if (game.eventStartDate && game.eventStartTime && game.eventEndDate && game.eventEndTime) {
-		var start = game.eventStartDate + 'T' + game.eventStartTime;
-		var end = game.eventEndDate + 'T' + game.eventEndTime;
-		time = moment(start).format('ha')+'-'+moment(end).format('ha');
+	var length = game.eventAttributes.Length;
+	if (game.eventStartDate) {
+		if (game.eventStartTime) {
+			if (game.eventEndDate) {
+				if (game.eventEndTime) {
+					var start = moment(game.eventStartDate +'T'+ game.eventStartTime);
+					var end = moment(game.eventEndDate +'T'+ game.eventEndTime);
+					time = start.format('ha') +'-'+ end.format('ha');
+					if (length === 'NULL') length = end.diff(start, 'hours');
+				} else {
+					console.error('game', game.eventId, time = 'invalid eventEndTime');
+				}
+			} else {
+				console.error('game', game.eventId, time = 'invalid eventEndDate');
+			}
+		} else {
+			console.error('game', game.eventId, time = 'invalid eventStartTime');
+		}
+	} else {
+		console.error('game', game.eventId, time = 'invalid eventStartDate');
 	}
 	var cats = game.categories ? game.categories.map(blob => blob.categoryName).join(', ') : 'NULL';
 	function col(label, val) {
 		return gen('td.'+label, val, row);
 	}
+	var gms = game.eventAttributes.GM;
+	if (attendees.GM && attendees.GM.length) {
+		gms = attendees.GM.map(gm => gm.displayName).join(', ');
+	}
+	var avail = game.eventAttributes.Players - pcs_signed_up;
+	if (game.eventAttributes.Players === 'NULL') {
+		avail = ''+ -pcs_signed_up;
+		dump.avail = {pcs_signed_up, Players: game.eventAttributes.Players, avail};
+	}
 	col('id', game.eventId);
 	col('time', time);
 	col('event-name', game.eventName);
 	col('system', game.eventAttributes.System);
-	col('gm', game.eventAttributes.GM);
-	col('length', game.eventAttributes.Length);
-	col('available', game.eventAttributes.Players - pcs_signed_up + ' of ' + game.eventAttributes.Players);
+	col('gm', gms);
+	col('length', length);
+	col('available', avail +' of '+ game.eventAttributes.Players);
 	col('type', cats);
+
+	// this is last so I can tag in dbg data into that dump
+	expando.gen('pre.datadump', {text: JSON.stringify(dump, null, 2)});
 }
 
 function refreshGame(id) {
-	console.log("refreshing", id);
-	return api.events.find(id).then(s => {
-		storeGame(s.body);
-		return updateGameDisplay(s.body.eventId);
-	});
+	try {
+		console.log("refreshing", id);
+		api.events.find(id).then(s => {
+			storeGame(s.body);
+			return updateGameDisplay(s.body.eventId);
+		}).catch(e => console.error);
+	} catch (e) {
+		console.error(e);
+	}
 }
 
 function enableSearch(all_games) {
@@ -267,46 +308,50 @@ function enableSearch(all_games) {
 			todays_games.map(game => {
 				var id = game.eventId;
 				var row = tbody.gen(`tr#game${id}.game-summary`);
-				var expando = tbody.gen(`tr#expando${id}/td`, {colspan: 10, style: 'display: none'});
+				var expando = tbody.gen(`tr#expando${id}/td.expando`, {colspan: 10, style: 'display: none'});
 				row.click(() => {
 					expando.toggle();
 				});
-				updateGameDisplay(game.eventId);
+				try {
+					updateGameDisplay(game.eventId);
+				} catch (e) {
+					console.error(e);
+				}
 			});
 		});
-		dbg = true;
 	} else if (user_count) {
 		omni_button.text("Finding Games...");
 	} else {
 		omni_button.text("Finding Games and Users...");
 	}
-	console.error(`enableSearch(${omni_button.text()})`);
+	if (dbg) console.info(`loading phase: ${omni_button.text()}`);
 }
 
 function stateUser() {
 	$("body > .page > section").hide();
 	$("body > .page > section.games").show();
 	api.users.me().then(resp => {
-		console.log(JSON.stringify({me: resp.body},null, 2));
+		if (dbg && myself.isadmin !== true) console.log(JSON.stringify({me: resp.body},null, 2));
 		var id = resp.body.id;
 	});
 	api.events.me().then(resp => {
-		console.log(JSON.stringify({mygames: resp}, null, 2));
+		if (dbg) console.log(JSON.stringify({mygames: resp.map(g => g.eventId)}));
 	});
 	enableSearch();
-	var start = Date.now();
-	console.log({start});
 	if (0) {
+		var start = Date.now();
+		if (dbg) console.log({start});
 		var g = localStorage.getItem('games');
 		var epoch = localStorage.getItem('epoch');
 		// console.log("refreshing game cache", g = null);
 		if (g && epoch) {
 			g = JSON.parse(g);
-			console.log("loaded games from cache", g);
+			if (dbg) console.log("loaded games from cache", g);
 			enableSearch(g);
 			return api.events.since(epoch).then(resp => {
-				console.log({resp, start, last: epoch});
-				localStorage.setItem('epoch', start);
+				if (dbg) console.log({epoch_load_response: resp, start, last: epoch});
+				console.info(`games changed between ${moment(+epoch).fromNow()} and ${moment(start).fromNow()} (count ${resp.body.length})`);
+				if (resp.body.length) localStorage.setItem('epoch', start);
 			});
 		}
 		api.events.all().then(resp => {
@@ -358,7 +403,7 @@ function testSession(token) {
 			$(".page").show();
 			return $("section.games").html(myself).show();
 		}
-		console.log(JSON.stringify({myself}, null, 2));
+		if (dbg) console.log(JSON.stringify({myself}, null, 2));
 		myself.isadmin = 'TBD';
 		api.users.me.isadmin().then(resp => {
 			myself.isadmin = false;
@@ -385,11 +430,16 @@ document.addEventListener('deviceready', function() {
 	var $login_modal = gen('.quickmodal.login', null, document.body);
 	var udata = {placeholder: 'username'};
 	var pdata = {placeholder: 'password'};
-	if (1) {
-		// xander's api debugging mode
-		udata.value = 'SantaWolf'; // my admin role
-		// udata.value = 'Xander'; // my real life bbc player role
-		pdata.value = 'brake68care48dust94fire';
+	if (location.search.length) {
+		// xander's login debugging mode
+		var vars = {};
+		var filter = /^([a-zA-Z0-9_-]+)=([a-zA-Z0-9_-]+)$/;
+		location.search.substr(1).split('&').map(v => {
+			var out = v.match(filter);
+			if (out) vars[out[1]] = out[2];
+		});
+		if (vars.u) udata.value = vars.u;
+		if (vars.p) pdata.value = vars.p;
 	}
 
 	var user = $login_modal.gen('input.user', udata);
@@ -437,7 +487,6 @@ document.addEventListener('deviceready', function() {
 	var token = localStorage.getItem('Authorization');
 	$("body > .page > section").hide();
 	if (token) {
-		console.log("found", token);
 		testSession(token);
 	} else {
 		stateLoginTime();
