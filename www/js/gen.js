@@ -54,14 +54,14 @@ gen.decorate = function(ele) {
 				var header = child.gen('tr');
 
 				var col_names = Object.keys(schema);
-				col_names.forEach(k => {
+				col_names.forEach(function(k) {
 					data_keys.push(schema[k]);
 					header.gen('th', {text: k});
 				});
 
-				return list.map(row => {
+				return list.map(function(row) {
 					var tr = child.gen('tr');
-					col_names.map(name => {
+					col_names.map(function(name) {
 						var data_key = schema[name];
 						if (typeof data_key === 'function') {
 							var result = data_key(row, tr);
@@ -75,7 +75,7 @@ gen.decorate = function(ele) {
 			};
 
 			child.verticalRecord = function(tup) {
-				Object.keys(tup).filter(k => tup[k] != undefined).map(k => {
+				Object.keys(tup).filter(function(k) { return tup[k] != undefined; }).map(function(k) {
 					var tr = child.gen('tr');
 					tr.gen('td', {text: k});
 					tr.gen('td', {text: tup[k]});
@@ -89,4 +89,3 @@ gen.decorate = function(ele) {
 }
 window.LIB_LOADING = window.LIB_LOADING || {};
 window.LIB_LOADING['gen'] = true;
-

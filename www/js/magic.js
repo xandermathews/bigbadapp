@@ -1,14 +1,27 @@
+console.log("magic eight ball!");
 (function() {
 	"use strict";
 	var dbg_booking = 0;
 	var dbg_login = 0;
-	var redundant_looping_block = null; // paranoia about there being some browser bug that causes my "login, retry form submission" to go into an infinite loop.
 
 	function testSession() {
 		var jwt = localStorage.getItem('Authorization');
 		var uid = localStorage.getItem('state');
 		if (jwt && uid && uid !== 'undefined') return {jwt, uid};
 		return null;
+	}
+
+	function redactError(err) {
+		try {
+			if (err.request && err.request.conf && err.request.conf.body) {
+				var parsed = JSON.parse(err.request.conf.body);
+				if (parsed.password) parsed.password = '[REDACTED]';
+				err.request.conf.body = parsed;
+			}
+		} catch (e) {
+			console.error("redactor failed", e);
+		}
+		return err;
 	}
 
 	function dualSession() {
@@ -19,29 +32,18 @@
 			var user = form.find('input[name="log"]').val();
 			var pass = form.find('input[name="pwd"]').val();
 
-			var trying = user + pass;
-			if (trying === redundant_looping_block) return true;
-			redundant_looping_block = trying;
-
-			api.login(user, pass).done(s => {
+			api.login(user, pass).done(function(s) {
 				if (dbg_login) console.log("login:",s);
 				var login_button = $("#lwa_wp-submit, #wp-submit");
-				if (s) login_button.click(); // resubmit event; which will just get to the jwt test.
-			}, err => {
+				if (s) login_button.trigger('click', ['pass-to-wordpress']); // resubmit event; which will just get to the jwt test.
+			}, function(err) {
 				console.error(err);
 				if (err.body && err.body.message) return alert(err.body.message);
-				try {
-					if (err.request && err.request.conf && err.request.conf.body) {
-						var parsed = JSON.parse(err.request.conf.body);
-						if (parsed.password) parsed.password = '[REDACTED]';
-						err.request.conf.body = parsed;
-					}
-				} catch (e) {
-					console.error("redactor failed", e);
-				}
+				err = redactError(err);
 				alert("FAIL: "+ JSON.stringify(err, null, 2));
 			});
 		} catch (err) {
+			err = redactError(err);
 			console.error(err);
 			alert("FAIL: "+ JSON.stringify(err, null, 2));
 		}
@@ -78,7 +80,7 @@
 
 				case 'Book Now':
 					button.text("Working...").disable();
-					return api.bookings.bookMeIntoGame(gid).done(resp => {
+					return api.bookings.bookMeIntoGame(gid).done(function(resp) {
 						if (dbg_booking) console.log("booking:", resp);
 						if (resp.code === 403 || resp.body.status === 'FAILURE') {
 							button.text("Book Now").enable();
@@ -100,11 +102,11 @@
 				var gid = e.getAttribute('data-id');
 				if (dbg_booking) console.log(JSON.stringify(api.state.my_events, null, 2));
 
-				legacy_cancel.click(() => {
+				legacy_cancel.click(function() {
 					console.log("user is cancelling", gid, api.state.id);
 				});
 				legacy_bookme.unbind("click").show();
-				legacy_bookme.click(() => {
+				legacy_bookme.click(function() {
 					console.log("user is booking", gid, api.state.id);
 					magic.bookme(gid, legacy_bookme);
 				});

@@ -127,8 +127,7 @@ function pickUser() {
 
 function storeGame(game) {
 	if (!game.eventAttributes) {
-		console.warn("game eventAttributes is null:", game.eventStartDate);
-		// console.log(JSON.stringify(game, null, 2));
+		console.warn("game eventAttributes is null:", game);
 	}
 	games.id[game.eventId] = game;
 	games.day[game.eventStartDate] = games.day[game.eventStartDate] || [];
@@ -202,14 +201,18 @@ function updateGameDisplay(id) {
 	expando.gen('p', text);
 	expando.gen('pre', {text: JSON.stringify(dump, null, 2)});
 
-	var start = game.eventStartDate + 'T' + game.eventStartTime;
-	var end = game.eventEndDate + 'T' + game.eventEndTime;
+	var time = 'invalid';
+	if (game.eventStartDate && game.eventStartTime && game.eventEndDate && game.eventEndTime) {
+		var start = game.eventStartDate + 'T' + game.eventStartTime;
+		var end = game.eventEndDate + 'T' + game.eventEndTime;
+		time = moment(start).format('ha')+'-'+moment(end).format('ha');
+	}
 	var cats = game.categories ? game.categories.map(blob => blob.categoryName).join(', ') : 'NULL';
 	function col(label, val) {
 		return gen('td.'+label, val, row);
 	}
 	col('id', game.eventId);
-	col('time', moment(start).format('ha')+'-'+moment(end).format('ha'));
+	col('time', time);
 	col('event-name', game.eventName);
 	col('system', game.eventAttributes.System);
 	col('gm', game.eventAttributes.GM);
@@ -293,7 +296,7 @@ function stateUser() {
 	enableSearch();
 	var start = Date.now();
 	console.log({start});
-	if (1) {
+	if (0) {
 		var g = localStorage.getItem('games');
 		var epoch = localStorage.getItem('epoch');
 		// console.log("refreshing game cache", g = null);
@@ -346,7 +349,7 @@ function stateAdmin() {
 }
 
 function testSession(token) {
-	api.authorization = token;
+	// api.authorization = token;
 	$("body > .page > section").hide();
 	omni_button.text("...");
 	api.users.me().then(resp => myself = resp.body).then(() => {
@@ -397,7 +400,8 @@ document.addEventListener('deviceready', function() {
 			console.log("logging in", user.val(), pass.val());
 			api.login(user.val(), pass.val()).done(s => {
 				$login_modal.trigger('closeModal');
-				localStorage.setItem('Authorization', s);
+				console.log({almost: s});
+				// localStorage.setItem('Authorization', s);
 				testSession(s);
 			}, err => {
 				if (err.code !== 401) fail(err);
