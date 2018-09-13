@@ -408,7 +408,12 @@ function testSession(token) {
 		api.users.me.isadmin().then(resp => {
 			myself.isadmin = false;
 			if (resp.body === true) return stateAdmin();
-			if (resp.body === false) return stateUser();
+			if (0) {
+				if (resp.body === false) return stateUser();
+			} else {
+				// until we've redacted properly we must not let users log in:
+				if (resp.body === false) alert("not an admin");
+			}
 			return stateLoginTime();
 		});
 	});
@@ -447,7 +452,7 @@ document.addEventListener('deviceready', function() {
 	var subm = $login_modal.gen('button', {
 		text: 'Login',
 		click() {
-			console.log("logging in", user.val(), pass.val());
+			console.log("logging in as", user.val());
 			api.login(user.val(), pass.val()).done(s => {
 				$login_modal.trigger('closeModal');
 				console.log({almost: s});
