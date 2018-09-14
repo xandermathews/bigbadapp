@@ -14,10 +14,12 @@ browser:
 	cordova run browser --device -- --live-reload
 
 deploy:
+	@echo do you mean make dev or make prod'?'
+sitebuild:
 	cordova build browser --prod --release
-	# rsync2 www/ b:/var/www/nginx/
-	# sed '/REDACTME/d' -i platforms/browser/www/js/index.js
+prod: sitebuild
 	rsync2 platforms/browser/www/ bb:/var/www/nginx/gameadmin
+dev: sitebuild
 	rsync2 platforms/browser/www/ bb:/var/www/nginx/gameadminDEV
 
 # this is same as "browser", except dropping the live reload component that causes the first render to have several errors.
