@@ -1,6 +1,6 @@
 "use strict";
 
-var dbg_api_init = 0;
+var dbg_api_init = 1;
 if (dbg_api_init) console.log("api started");
 api.base_url = 'https://bigbadcon.com:8091/apidev/';
 if (location.hostname === "www.bigbadcon.com" && !location.pathname.match(/^\/gameadminDEV/)) {
@@ -25,7 +25,6 @@ api.login = function(username, password) {
 	});
 };
 
-if (dbg_api_init) console.log("api started2");
 api.refreshState = function(fast) {
 	if (!api.authorization) return console.log("can't refresh state, have no api auth key");
 	if (dbg_api_init) console.log("refreshing state", fast?"fast":"slow");
@@ -64,7 +63,6 @@ api.refreshState = function(fast) {
 		return api.state;
 	});
 };
-if (dbg_api_init) console.log("api started3");
 
 api.bookings = {
 	addUserToGame(eventId, userId) {
@@ -139,13 +137,12 @@ api.users.me.isadmin = function() {
 
 api.post2 = function() {
 	return api.post.apply(null, arguments).then(function(resp) {return resp.body; });
-}
+};
 
 api.get2 = function() {
 	return api.get.apply(null, arguments).then(function(resp) { return resp.body; });
-}
+};
 
-if (dbg_api_init) console.log("api started lastly");
 (function() {
 	api.authorization = localStorage.getItem('Authorization');
 	if (!api.authorization) return console.log("can't refresh state, have no api auth key");
@@ -166,7 +163,6 @@ if (dbg_api_init) console.log("api started lastly");
 
 	api.refreshState(api.state.id != undefined);
 })();
-if (dbg_api_init) console.log("api loaded");
 window.LIB_LOADING = window.LIB_LOADING || {};
 window.LIB_LOADING['api'] = true;
 
