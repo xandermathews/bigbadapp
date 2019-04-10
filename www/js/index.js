@@ -60,7 +60,7 @@ function dialog(class_, attrs) {
 	*/
 	button("my games", () => {
 		api.events.me().then(resp => {
-			console.log(JSON.stringify({their: resp}, null, 2));
+			console.log(JSON.stringify({server_response: resp}, null, 2));
 			var d = dialog("nowrap");
 			var t = d.gen('table.padded');
 			resp.map(game => {

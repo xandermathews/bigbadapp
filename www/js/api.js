@@ -6,6 +6,7 @@ api.base_url = 'https://bigbadcon.com:8091/apidev/';
 if (location.hostname === "www.bigbadcon.com" && !location.pathname.match(/^\/gameadminDEV/)) {
 	api.base_url = 'https://bigbadcon.com:8091/api/';
 }
+api.base_url = 'https://bigbadcon.com:8091/api/';
 
 console.log("API", api.base_url);
 
