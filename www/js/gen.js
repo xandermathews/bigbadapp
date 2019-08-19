@@ -89,3 +89,4 @@ gen.decorate = function(ele) {
 }
 window.LIB_LOADING = window.LIB_LOADING || {};
 window.LIB_LOADING['gen'] = true;
+console.log("gen version 2019-08-14");

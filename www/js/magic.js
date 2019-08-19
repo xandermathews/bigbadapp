@@ -1,7 +1,14 @@
 (function() {
 	"use strict";
-	var dbg_booking = 0;
-	var dbg_login = 0;
+	console.error("running magic init");
+	var dbg = {
+		booking: function() {
+			console.log.apply(console, arguments);
+		},
+		login: function() {
+			console.log.apply(console, arguments);
+		},
+	};
 
 	function testSession() {
 		var jwt = localStorage.getItem('Authorization');
@@ -32,7 +39,7 @@
 			var pass = form.find('input[name="pwd"]').val();
 
 			api.login(user, pass).done(function(s) {
-				if (dbg_login) console.log("login:",s);
+				dbg.login("login:",s);
 				var login_button = $("#lwa_wp-submit, #wp-submit");
 				if (s) login_button.trigger('click', ['pass-to-wordpress']); // resubmit event; which will just get to the jwt test.
 			}, function(err) {
@@ -64,7 +71,7 @@
 		},
 
 		testSessionDesync: function(logout_button) {
-			if (dbg_login) console.log("testSessionDesync:", logout_button.length);
+			dbg.login("testSessionDesync:", logout_button.length);
 			if (logout_button.length === 0) return;
 			// if a user has a WP session but no API session, force the issue.
 			var tokens = testSession();
@@ -72,7 +79,7 @@
 		},
 
 		bookme: function(gid, button) {
-			if (dbg_booking) console.log({bstate: button.text(), booking: api.state.id, into: gid, button, auth: api.authorization});
+			dbg.booking({bstate: button.text(), booking: api.state.id, into: gid, button, auth: api.authorization});
 			switch (button.text()) {
 				case 'Cancel':
 					return alert("you're already booked");
@@ -80,7 +87,7 @@
 				case 'Book Now':
 					button.text("Working...").disable();
 					return api.bookings.bookMeIntoGame(gid).done(function(resp) {
-						if (dbg_booking) console.log("booking:", resp);
+						dbg.booking("booking:", resp);
 						if (resp.code === 403 || resp.body.status === 'FAILURE') {
 							button.text("Book Now").enable();
 						} else {
@@ -99,25 +106,46 @@
 			if (legacy_bookme.length + legacy_cancel.length) return $("span.eventid").filter(function(i, e) {
 				var $e = $(e);
 				var gid = e.getAttribute('data-id');
-				if (dbg_booking) console.log(JSON.stringify(api.state.my_events, null, 2));
+				console.warn("found the game id", gid);
+				api.events.find(gid).then(function(game) {
+					if (game.metamap.volunteer_shift === '1' && api.state.is_volunteer !== true) {
+						legacy_bookme.text("VOLUNTEER ONLY");
+						legacy_bookme.css({backgroundColor:"red"});
+						legacy_bookme.prop('disabled', true);
+					}
+					if (game.metamap.vendor_shift === '1' && api.state.is_vendor !== true) {
+						legacy_bookme.text("VENDOR ONLY");
+						legacy_bookme.css({backgroundColor:"red"});
+						legacy_bookme.prop('disabled', true);
+					}
 
-				legacy_cancel.click(function() {
-					console.log("user is cancelling", gid, api.state.id);
-				});
-				legacy_bookme.unbind("click").show();
-				legacy_bookme.click(function() {
-					console.log("user is booking", gid, api.state.id);
-					magic.bookme(gid, legacy_bookme);
-				});
+					dbg.booking('api.state.my_events:', JSON.stringify(api.state.my_events, null, 2));
 
-				// if (dbg_booking) console.log({testing: gid, entry: api.state.my_events[gid], text});
+					legacy_cancel.click(function() {
+						console.log("user is cancelling", gid, api.state.id);
+					});
+					legacy_bookme.unbind("click").show();
+					legacy_bookme.click(function() {
+						console.log("user is booking", gid, api.state.id);
+						magic.bookme(gid, legacy_bookme);
+					});
+
+					dbg.booking({testing: gid, entry: api.state.my_events[gid]});
+				}, function(e) {
+					console.error("api.events.find:", e);
+				});
 			});
+			console.log("still looking for buttons");
+		} else {
+			console.log("still looking for fresh state");
 		}
 
 		setTimeout(installButton, 100);
 	}
+	console.log("invoking");
 	installButton();
 })();
 
 window.LIB_LOADING = window.LIB_LOADING || {};
 window.LIB_LOADING['magic'] = true;
+console.log("magic version 2019-08-14");

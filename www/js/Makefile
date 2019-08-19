@@ -1,3 +1,4 @@
+# new style: /home/xander/root/wp-content/themes/atahualpa/plugins/xandermagic-libraries-2019-07-26/
 local: polyfill shim
 	rsync2 magic.js fetch-api.js api.js gen.js ../js-vendor/ ~/big-bad-con-site/wp-content/themes/atahualpa/plugins/login-with-ajax
 	rsync -rP ~/big-bad-con-site/wp-content/themes/atahualpa/plugins/login-with-ajax/ l:/home/web/www.logictwine.com/repositories/github/wp-content/themes/atahualpa/plugins/login-with-ajax

@@ -101,3 +101,4 @@ window.api = {
 };
 window.LIB_LOADING = window.LIB_LOADING || {};
 window.LIB_LOADING['fetch-api'] = true;
+console.log("fetch-api version 2019-08-14");

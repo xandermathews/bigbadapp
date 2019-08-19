@@ -121,6 +121,7 @@
 		run(modules, function() {
 			if (dbg_shim) console.log("all shims loaded");
 			magic.testSessionDesync(logout_button);
+			return;
 			if (location.host !== 'www.logictwine.com') return; // in prod, none of the rest is needed
 			return gen('button', {
 				text: 'run patcher',
@@ -136,3 +137,4 @@
 	}
 	init();
 })();
+console.log("shim version 2019-08-14");
