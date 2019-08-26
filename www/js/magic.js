@@ -110,13 +110,17 @@
 				api.events.find(gid).then(function(game) {
 					if (game.metamap.volunteer_shift === '1' && api.state.is_volunteer !== true) {
 						legacy_bookme.text("VOLUNTEER ONLY");
-						legacy_bookme.css({backgroundColor:"red"});
+						legacy_bookme.css({backgroundColor:"#ca0000"});
 						legacy_bookme.prop('disabled', true);
+						legacy_bookme.parent().append($('<span>', {text: 'In order to sign up for a volunteer shift, first ', class: "booking-restriction booking-restriction-volunteer"}));
+						legacy_bookme.parent().append($('<a>', {href: '/volunteer/join-the-rangers/', text: 'Join the Rangers.', class: "booking-restriction booking-restriction-volunteer"}));
 					}
 					if (game.metamap.vendor_shift === '1' && api.state.is_vendor !== true) {
 						legacy_bookme.text("VENDOR ONLY");
-						legacy_bookme.css({backgroundColor:"red"});
+						legacy_bookme.css({backgroundColor:"#ca0000"});
 						legacy_bookme.prop('disabled', true);
+						legacy_bookme.parent().append($('<span>', {text: 'In order to book time in the Small Press Showcase, ', class: "booking-restriction booking-restriction-vendor"}));
+						legacy_bookme.parent().append($('<a>', {href: '/small-press-vendor-signup', text: 'sign up to become a vendor.', class: 'booking-restriction booking-restriction-vendor'}));
 					}
 
 					dbg.booking('api.state.my_events:', JSON.stringify(api.state.my_events, null, 2));
