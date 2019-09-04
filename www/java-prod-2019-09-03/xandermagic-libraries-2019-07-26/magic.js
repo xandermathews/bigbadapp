@@ -8,25 +8,13 @@
 			console.log.apply(console, arguments);
 		},
 	};
+	var redundant_looping_block = null; // paranoia about there being some browser bug that causes my "login, retry form submission" to go into an infinite loop.
 
 	function testSession() {
 		var jwt = localStorage.getItem('Authorization');
 		var uid = localStorage.getItem('state');
 		if (jwt && uid && uid !== 'undefined') return {jwt, uid};
 		return null;
-	}
-
-	function redactError(err) {
-		try {
-			if (err.request && err.request.conf && err.request.conf.body) {
-				var parsed = JSON.parse(err.request.conf.body);
-				if (parsed.password) parsed.password = '[REDACTED]';
-				err.request.conf.body = parsed;
-			}
-		} catch (e) {
-			console.error("redactor failed", e);
-		}
-		return err;
 	}
 
 	function dualSession() {
@@ -37,18 +25,29 @@
 			var user = form.find('input[name="log"]').val();
 			var pass = form.find('input[name="pwd"]').val();
 
-			api.login(user, pass).done(function(s) {
+			var trying = user + pass;
+			if (trying === redundant_looping_block) return true;
+			redundant_looping_block = trying;
+
+			api.login(user, pass).done(s => {
 				dbg.login("login:",s);
 				var login_button = $("#lwa_wp-submit, #wp-submit");
-				if (s) login_button.trigger('click', ['pass-to-wordpress']); // resubmit event; which will just get to the jwt test.
-			}, function(err) {
+				if (s) login_button.click(); // resubmit event; which will just get to the jwt test.
+			}, err => {
 				console.error(err);
 				if (err.body && err.body.message) return alert(err.body.message);
-				err = redactError(err);
+				try {
+					if (err.request && err.request.conf && err.request.conf.body) {
+						var parsed = JSON.parse(err.request.conf.body);
+						if (parsed.password) parsed.password = '[REDACTED]';
+						err.request.conf.body = parsed;
+					}
+				} catch (e) {
+					console.error("redactor failed", e);
+				}
 				alert("FAIL: "+ JSON.stringify(err, null, 2));
 			});
 		} catch (err) {
-			err = redactError(err);
 			console.error(err);
 			alert("FAIL: "+ JSON.stringify(err, null, 2));
 		}
@@ -85,7 +84,7 @@
 
 				case 'Book Now':
 					button.text("Working...").disable();
-					return api.bookings.bookMeIntoGame(gid).done(function(resp) {
+					return api.bookings.bookMeIntoGame(gid).done(resp => {
 						dbg.booking("booking:", resp);
 						if (resp.code === 403 || resp.body.status === 'FAILURE') {
 							button.text("Book Now").enable();
@@ -98,6 +97,7 @@
 		}
 	};
 	function installButton() {
+		// dbg.booking("installing button", api.state && api.state.fresh);
 		if (api.state && api.state.fresh) {
 			var legacy_bookme = $(".em-booking-button");
 			var legacy_cancel = $(".em-cancel-button");
@@ -105,50 +105,27 @@
 			if (legacy_bookme.length + legacy_cancel.length) return $("span.eventid").filter(function(i, e) {
 				var $e = $(e);
 				var gid = e.getAttribute('data-id');
-				console.warn("found the game id", gid);
-				api.events.find(gid).then(function(game) {
-					if (game.metamap.volunteer_shift === '1' && api.state.is_volunteer !== true) {
-						legacy_bookme.text("VOLUNTEER ONLY");
-						legacy_bookme.css({backgroundColor:"#ca0000"});
-						legacy_bookme.prop('disabled', true);
-						legacy_bookme.parent().append($('<span>', {text: 'In order to sign up for a volunteer shift, first ', class: "booking-restriction booking-restriction-volunteer"}));
-						legacy_bookme.parent().append($('<a>', {href: '/volunteer/join-the-rangers/', text: 'Join the Rangers.', class: "booking-restriction booking-restriction-volunteer"}));
-					}
-					if (game.metamap.vendor_shift === '1' && api.state.is_vendor !== true) {
-						legacy_bookme.text("VENDOR ONLY");
-						legacy_bookme.css({backgroundColor:"#ca0000"});
-						legacy_bookme.prop('disabled', true);
-						legacy_bookme.parent().append($('<span>', {text: 'In order to book time in the Small Press Showcase, ', class: "booking-restriction booking-restriction-vendor"}));
-						legacy_bookme.parent().append($('<a>', {href: '/small-press-vendor-signup', text: 'sign up to become a vendor.', class: 'booking-restriction booking-restriction-vendor'}));
-					}
+				dbg.booking(JSON.stringify(api.state.my_events, null, 2));
 
-					dbg.booking('api.state.my_events:', JSON.stringify(api.state.my_events, null, 2));
-
-					legacy_cancel.click(function() {
-						console.log("user is cancelling", gid, api.state.id);
-					});
-					legacy_bookme.unbind("click").show();
-					legacy_bookme.click(function() {
-						console.log("user is booking", gid, api.state.id);
-						magic.bookme(gid, legacy_bookme);
-					});
-
-					dbg.booking({testing: gid, entry: api.state.my_events[gid]});
-				}, function(e) {
-					console.error("api.events.find:", e);
+				legacy_cancel.click(() => {
+					console.log("user is cancelling", gid, api.state.id);
 				});
+				legacy_bookme.unbind("click").show();
+				legacy_bookme.click(() => {
+					console.log("user is booking", gid, api.state.id);
+					magic.bookme(gid, legacy_bookme);
+				});
+
+				// dbg.booking({testing: gid, entry: api.state.my_events[gid], text});
 			});
-			console.log("still looking for buttons");
-		} else {
-			console.log("still looking for fresh state");
 		}
 
 		setTimeout(installButton, 100);
 	}
-	console.log("invoking");
 	installButton();
 })();
 
 window.LIB_LOADING = window.LIB_LOADING || {};
 window.LIB_LOADING['magic'] = true;
-console.log("magic version 2019-08-14");
+if (window.xander_shim_dbg) console.log("magic 2019-07-26");
+

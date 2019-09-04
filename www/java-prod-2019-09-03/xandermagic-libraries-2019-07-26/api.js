@@ -1,62 +1,36 @@
 "use strict";
 
 var dbg_api_init = 1;
-if (location.hostname.match(/bigbadcon.com/) && !location.pathname.match(/^\/gameadminDEV/)) {
-	api.base_url = 'https://bigbadcon.com:8091/api/';
-} else {
+if (location.hostname === 'www.logictwine.com') {
 	api.base_url = 'https://bigbadcon.com:8091/apidev/';
+} else {
+	api.base_url = 'https://bigbadcon.com:8091/api/';
 }
 if (dbg_api_init) console.log({base: api.base_url});
 
-api.logout = function(err) {
-	if (dbg_api_init) console.warn('logging user out');
+api.login = (username, password) => {
 	api.authorization = null;
 	localStorage.removeItem('Authorization');
 	localStorage.removeItem('state');
 	api.state = {};
-
-	var logout_button = $("#wp-logout");
-	logout_button = 0; // disabled! I'm seeing another system auto-logout, so I'm making _this_one 
-	if (err) {
-		if (logout_button.length !== 0) {
-			err = 'PLEASE LOG OUT AND BACK AGAIN\n\n' + err;
-		} 
-		console.warn("alerting", err);
-		alert(err);
-	}
-	if (logout_button.length !== 0) {
-		// location = logout_button.attr('href');
-	}
-};
-
-api.login = function(username, password) {
-	return api.post('login', {username, password}).then(function(resp) {
-		if (dbg_api_init) console.log({given:{username, password}, got: resp});
+	return api.post('login', {username, password}).then(resp => {
 		if (resp.code !== 200) throw resp;
 		var auth = resp.headers.authorization;
 		api.authorization = auth;
 		localStorage.setItem('Authorization', auth);
-		if (dbg_api_init) console.log({set: auth});
 		return api.refreshState();
 	});
 };
 
-api.refreshState = function(fast) {
-	console.log("api.refreshState");
+api.refreshState = (fast) => {
 	if (!api.authorization) return console.log("can't refresh state, have no api auth key");
 	if (dbg_api_init) console.log("refreshing state", fast?"fast":"slow");
 
 	var fin;
-	//ensure api.state at least exists as there's an ajax race below otherwise. (I really need to re-simplify this whole auth thing)
-	api.state = api.state || {};
-	var events = api.events.me().then(function(list_of_games) {
-		console.log("bad bad", list_of_games);
-		if (list_of_games.status === 401) {
-			return api.logout(list_of_games.message);
-		}
+	var events = api.events.me().then(list_of_games => {
 		if (dbg_api_init) console.log("e?", list_of_games);
 		var events = {};
-		list_of_games.map(function(game) {
+		list_of_games.map(game => {
 			events[game.eventId] = game;
 			if (dbg_api_init) console.info(game.eventId, game);
 		});
@@ -67,23 +41,22 @@ api.refreshState = function(fast) {
 		fin = events;
 	} else {
 		// NOTE: users.me() nukes the other two, hence the lack of saving it directly to state.
-		var me = api.users.me().then(function(resp_me) {
+		var me = api.users.me().then(resp_me => {
 			return resp_me.body;
 		});
-		var isadmin = api.users.me.isadmin().then(function(resp_isadmin) {
+		var isadmin = api.users.me.isadmin().then(resp_isadmin => {
 			return api.state.isadmin = resp_isadmin && resp_isadmin.body === true;
 		});
 
-		fin = Q.all([me, isadmin, events]).then(function(results) {
-			if (dbg_api_init) console.warn("initing api state to my user obj");
+		fin = Q.all([me, isadmin, events]).then(results => {
 			api.state = results[0];
 			api.state.isadmin = results[1];
 			api.state.my_events = results[2];
 		});
 	}
-	return fin.then(function() {
+	return fin.then(() => {
 		localStorage.setItem('state', JSON.stringify(api.state));
-		console.log("api state is fresh now");
+		if (dbg_api_init) console.log("state refreshed", api.state);
 		api.state.fresh = true;
 		return api.state;
 	});
@@ -93,7 +66,7 @@ api.bookings = {
 	addUserToGame(eventId, userId) {
 		console.error("untested");
 		if (userId === undefined) {
-			return pickUser().then(function(id) {
+			return pickUser().then(id => {
 				if (id !== 'cancelled') {
 					return api.bookings.addUserToGame(eventId, id);
 				}
@@ -114,14 +87,6 @@ api.bookings = {
 	}
 };
 
-function flipMeta(array) {
-	var metamap = {};
-	array.map(function(meta) {
-		metamap[meta.metaKey] = meta.metaValue;
-	});
-	return metamap;
-}
-
 api.events = {
 	all() {
 		return api.get('events/all');
@@ -130,10 +95,7 @@ api.events = {
 	// TODO https://bigbad8ram.ashnazg.com/api/swagger-ui.html#!/events-controller/getCountUsingGET
 	// TODO https://bigbad8ram.ashnazg.com/api/swagger-ui.html#!/events-controller/getCountForYearUsingGET
 	find(id) {
-		return api.post2('events/find', {id}).then(function(body) {
-			body.metamap = flipMeta(body.metadata);
-			return body;
-		});
+		return api.post('events/find', {id});
 	},
 	// TODO https://bigbad8ram.ashnazg.com/api/swagger-ui.html#!/events-controller/findForMeUsingGET
 	// TODO https://bigbad8ram.ashnazg.com/api/swagger-ui.html#!/events-controller/findForMeForYearUsingGET
@@ -159,14 +121,7 @@ api.users = {
 		return api.post('users/id', {id});
 	},
 	me() {
-		return api.get('users/me').then(function(response) {
-			var user = response.body;
-			user.metamap = flipMeta(user.metadata);
-			var php = user.metamap.wp_tuiny5_capabilities;
-			user.is_vendor = php.indexOf("vendor") !== -1;
-			user.is_volunteer = php.indexOf("volunteer") !== -1;
-			return response;
-		});
+		return api.post('users/me');
 	},
 	username() {
 		console.error("untested");
@@ -174,25 +129,24 @@ api.users = {
 	},
 };
 
-api.users.me.isadmin = function() {
+api.users.me.isadmin = () => {
 	return api.post('users/me/isadmin');
 };
 
 api.post2 = function() {
-	return api.post.apply(null, arguments).then(function(resp) {return resp.body; });
+	return api.post.apply(null, arguments).then(resp => resp.body);
 };
 
 api.get2 = function() {
-	return api.get.apply(null, arguments).then(function(resp) { return resp.body; });
+	return api.get.apply(null, arguments).then(resp => resp.body);
 };
 
 (function() {
 	api.authorization = localStorage.getItem('Authorization');
 	if (!api.authorization) return console.log("can't refresh state, have no api auth key");
-	console.log("starting init run", api.authorization);
 
 	if (!api.state) {
-		if (dbg_api_init) console.warn("init api.state");
+		if (dbg_api_init) console.log("init api.state");
 		api.state = {};
 		try {
 			var cache = localStorage.getItem('state');
@@ -205,15 +159,10 @@ api.get2 = function() {
 		}
 	}
 
-	try {
-		// this was back in the weirder first year -- this year, we have much more optimised BE, so we can afford to simplfy this down by skipping the "fast" path
-		// api.refreshState(api.state.id != undefined);
-		api.refreshState();
-	} catch (e) {
-		console.error(e);
-	}
+	api.refreshState(api.state.id != undefined);
 })();
+
 window.LIB_LOADING = window.LIB_LOADING || {};
 window.LIB_LOADING['api'] = true;
 
-if (dbg_api_init) console.log("api version 2019-08-14");
+if (window.xander_shim_dbg) console.log("api 2019-07-26");

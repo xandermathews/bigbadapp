@@ -1,3 +1,6 @@
+#newbuild:
+#	cat ~/big-bad-con-site/wp-content/themes/atahualpa/plugins/login-with-ajax/login-with-ajax.js.orig
+
 # new style: /home/xander/root/wp-content/themes/atahualpa/plugins/xandermagic-libraries-2019-07-26/
 local: polyfill shim
 	rsync2 magic.js fetch-api.js api.js gen.js ../js-vendor/ ~/big-bad-con-site/wp-content/themes/atahualpa/plugins/login-with-ajax
